@@ -1,0 +1,164 @@
+import NotFound from "@/pages/dashboard/NotFound.jsx";
+import Layout from "../components/dashboard/Layout.jsx";
+import Home from "@/pages/dashboard/Home.jsx";
+import { Home as HomeIcon, Calendar } from "lucide-react";
+import Inventory from "@/pages/dashboard/Category.jsx";
+import Type from "@/pages/dashboard/inventory/Type/Type.jsx";
+import Quality from "@/pages/dashboard/inventory/Quality/Quality.jsx";
+import Category from "@/pages/dashboard/inventory/Category/Category.jsx";
+import Product from "@/pages/dashboard/inventory/Product/Product.jsx";
+import POS from "@/pages/dashboard/sale/POS.jsx";
+import SaleList from "@/pages/dashboard/sale/SaleList.jsx";
+import SaleReport from "@/pages/dashboard/sale/SaleReport.jsx";
+import CustomerList from "@/pages/dashboard/sale/Customer/CustomerList.jsx";
+import PurchaseSystem from "@/pages/dashboard/purchase/PurchaseSystem.jsx";
+import PurchaseList from "@/pages/dashboard/purchase/PurchaseList.jsx";
+import PurchaseReport from "@/pages/dashboard/purchase/PurchaseReport.jsx";
+import DailyPurchaseReport  from "@/pages/dashboard/reports/DailyPurchaseReport.jsx";
+import SupplierList from "@/pages/dashboard/purchase/SupplierList.jsx";
+import DailyReport from "@/pages/dashboard/reports/DailyReport.jsx";
+import ProfitLossReport from "@/pages/dashboard/reports/ProfitLossReport.jsx";
+import ExpenseReport from "@/pages/dashboard/reports/ExpenseReport.jsx";
+import COA from "@/pages/dashboard/coa/COA.jsx";
+import CreateType from "@/pages/dashboard/inventory/Type/CreateType.jsx";
+import CreateQuality from "@/pages/dashboard/inventory/Quality/CreateQuality.jsx";
+import CreateCategory from "@/pages/dashboard/inventory/Category/CreateCategory.jsx";
+import CreateProduct from "@/pages/dashboard/inventory/Product/CreateProduct.jsx";
+import Stock from "@/pages/dashboard/stock/Stock.jsx";
+import CreateCustomer from "@/pages/dashboard/sale/Customer/CreateCustomer.jsx";
+
+const dashboardRoute = [
+  {
+    path: "/",
+    element: <Layout />,
+    errorElement: <NotFound />,
+    children: [
+      {
+        path: "/dashboard",
+        element: <Home />,
+      },
+      // Inventory
+      {
+        path: "/inventory/type",
+        element: <Type />,
+      },
+      {
+        path: "/inventory/type/create",
+        element: <CreateType/>,
+      },
+      {
+        path: "/inventory/quality",
+        element: <Quality />,
+      },
+      {
+        path: "/inventory/quality/create",
+        element: <CreateQuality/>,
+      },
+      {
+        path: "/inventory/category",
+        element: <Category />,
+      },
+      {
+        path: "/inventory/category/create",
+        element: <CreateCategory/>,
+      },
+      {
+        path: "/inventory/product",
+        element: <Product />,
+      },
+      {
+        path: "/inventory/product/create",
+        element: <CreateProduct/>,
+      },
+      // Inventory
+
+      // SaleList
+      {
+        path: "/sale/sale-list",
+        element: <SaleList />,
+      },
+      {
+        path: "/sale/sale-report",
+        element: <SaleReport />,
+      },
+      {
+        path: "/sale/customer-list",
+        element: <CustomerList />,
+      },
+       {
+        path: "/sale/customer-list/create",
+        element: <CreateCustomer/>,
+      },
+      // SaleList
+
+      // PurchaseList
+      {
+        path: "/purchase/purchase-list",
+        element: <PurchaseList />,
+      },
+      {
+        path: "/purchase/purchase-report",
+        element: <PurchaseReport />,
+      },
+      {
+        path: "/purchase/supplier-list",
+        element: <SupplierList />,
+      },
+      // PurchaseList
+
+      //StockList
+      {
+        path: "/stocks/stock-list",
+        element: <Stock />,
+      },
+      //StockList
+
+      //ReportList
+      {
+        path: "/reports/report-sale",
+        element: <DailyReport />,
+      },
+      {
+        path: "/reports/report-purchase",
+        element: <DailyPurchaseReport />,
+      },
+      {
+        path: "/reports/profit-loss-report",
+        element: <ProfitLossReport />,
+      },
+      {
+        path: "/reports/expense-report",
+        element: <ExpenseReport />,
+      },
+      //ReportList
+
+      //COA
+      {
+        path : "/coa/coa-list",
+        element: <COA />,
+      }
+      //COA
+
+
+    ],
+  },
+  //SaleList
+  {
+        path: "/sale/pos",
+        element: <POS />,
+  },
+  //SaleList
+
+  //PurchaseList
+
+  {
+        path: "/purchase/purchase-system",
+        element: <PurchaseSystem />,
+  }
+
+  //PurchaseList
+
+
+];
+
+export default dashboardRoute;
