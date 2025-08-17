@@ -3,7 +3,7 @@ import { CalendarCogIcon, ChartBar,ClipboardCopyIcon,ClipboardListIcon,FileTextI
 const SidebarConfig = [
 {
     title: "Dashboard",
-    url : "/dashboard",
+    url : "/",
     icon : HomeIcon,
     collapsible: false,
 },

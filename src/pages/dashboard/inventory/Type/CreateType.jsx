@@ -10,17 +10,33 @@ import {
 } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeftIcon } from "lucide-react";
+import { useCreateTypeMutation } from "@/feature/api/inventory/typeApi";
+import { useForm } from "react-hook-form";
+import { toast } from "react-toastify";
 
 const CreateType = () => {
-  const [code, setCode] = useState("");
-  const [name, setName] = useState("");
-  const navigate = useNavigate();
+  const nav = useNavigate();
+  const [typeCreate] = useCreateTypeMutation();
+  
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // TODO: handle save logic
-    console.log({ code, name });
-  };
+  const {
+        register,
+        handleSubmit,
+        reset,
+        formState: { errors },
+      } = useForm();
+
+const handleCreateType = async (formData) => {
+  try {
+    const {data} = await typeCreate(formData);
+    console.log("Type created successfully:", data);
+    toast.success("Type created successfully!");
+    reset();
+    nav("/inventory/type");
+  } catch (error) {
+    console.error("Error create type");
+  } 
+}
 
   return (
     <div className="space-y-4">
@@ -34,9 +50,9 @@ const CreateType = () => {
 
       <div className="border-b-2"></div>
 
-      <form onSubmit={handleSubmit} className="space-y-6 max-w-xs">
+      <form onSubmit={handleSubmit(handleCreateType)} className="space-y-6 max-w-xs">
         {/* Code Select */}
-        <div>
+        {/* <div>
           <label className="block mb-1 font-medium">Code</label>
           <Select value={code} onValueChange={(value) => setCode(value)}>
             <SelectTrigger className="w-full">
@@ -48,15 +64,16 @@ const CreateType = () => {
               <SelectItem value="D">D</SelectItem>
             </SelectContent>
           </Select>
-        </div>
+        </div> */}
 
         {/* Name Input */}
         <div>
           <label className="block mb-1 font-medium">Name</label>
           <Input
             placeholder="Enter Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+            {...register("name")} 
+            // value={name}
+            // onChange={(e) => setName(e.target.value)}
             className="bg-gray-100"
           />
         </div>
