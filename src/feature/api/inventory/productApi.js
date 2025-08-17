@@ -1,0 +1,37 @@
+import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+
+export const productApi = createApi({
+  reducerPath: "productApi",
+  baseQuery: fetchBaseQuery({
+    baseUrl: import.meta.env.VITE_API_ENDPOINT,
+
+  }),
+  tagTypes: ["productApi"],
+  endpoints: (builder) => ({
+    getProduct: builder.query({
+      query: ({ limit, skip } = {}) => ({
+        url: `products?limit=${limit}&skip=${skip}`,
+        method: "GET",
+      }),
+      providesTags: ["productApi"],
+    }),
+    createProduct: builder.mutation({
+      query: (formData) => ({
+        url: "product/create",
+        method: "POST",
+        body: formData,
+      }),
+      invalidatesTags: ["productApi"],
+    }),
+    // logout: builder.mutation({
+    //   query: (token) => ({
+    //     url: "/user-logout",
+    //     method: "POST",
+    //     headers: {productApiorization : `Bearer ${token}`}
+    //   }),
+    //   invalidatesTags: ["productApi"],
+    // }),
+  }),
+});
+
+export const {useGetProductQuery,useCreateProductMutation} = productApi;

@@ -1,23 +1,16 @@
 import React from 'react'
-import { ChevronLeftIcon, EyeIcon, FilePenLineIcon, Pencil, SquarePenIcon, Trash2Icon } from "lucide-react";
+import { ChevronLeftIcon, EyeIcon, FilePenLineIcon, Pencil, SquarePen, SquarePenIcon, Trash2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableHeader, TableRow, TableHead, TableCell, TableBody } from "@/components/ui/table";
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import PaginatedTable from '@/components/dashboard/ResuableComponents/PaginatedTable';
-import { useGetQualityQuery } from '@/feature/api/inventory/qualityApi';
+import { useGetProductQuery } from '@/feature/api/inventory/productApi';
 
-const data = [
-  { id: 1, date: "6/6/2025", name: "Gold" },
-  { id: 2, date: "6/6/2025", name: "Silver" },
-  { id: 3, date: "6/6/2025", name: "Platinum" },
-  { id: 4, date: "6/6/2025", name: "Diamond" },
-];
 
-const Quality = () => {
-
+const COADetail = () => {
   const [searchParams] = useSearchParams();
-    const nav = useNavigate();
+    const navigate = useNavigate();
   
     // Current page from URL
     const page = parseInt(searchParams.get("page")) || 1;
@@ -25,12 +18,10 @@ const Quality = () => {
     const skip = (page - 1) * limit;
   
     // Fetch products
-    const { data: GetProducts } = useGetQualityQuery({ limit, skip });
-  
-    console.log("GetProducts", GetProducts);
+    const { data: GetProducts } = useGetProductQuery({ limit, skip });
   
     // Total pages
-    const totalItems = GetProducts?.data?.total || 0;
+    const totalItems = GetProducts?.total || 0;
     const totalPages = Math.ceil(totalItems / limit);
   
     // Change page
@@ -39,6 +30,8 @@ const Quality = () => {
         navigate(`?page=${newPage}`);
       }
     };
+  
+  
   return (
       <div className="space-y-4">
       {/* Top Bar */}
@@ -46,7 +39,7 @@ const Quality = () => {
           <span onClick={() => window.history.back()} className="cursor-pointer">
           <ChevronLeftIcon/>
          </span>
-          Quality
+         Chart of Accounts
          </h1>
 
          <div className="border-b-2"></div>
@@ -56,7 +49,7 @@ const Quality = () => {
       <div className='flex justify-between items-center mt-5'>
       <Input placeholder="Search" className="max-w-sm rounded-md" />
         <Button className="bg-yellow-600 hover:bg-yellow-700 text-white rounded-md">
-          <Link to="/inventory/quality/create" className="flex items-center gap-2">
+          <Link to="/coa/coa-detail-create" className="flex items-center gap-2">
             + Create
           </Link>
         </Button>
@@ -67,23 +60,26 @@ const Quality = () => {
 
       {/* Table */}
       {/* <Card className="overflow-hidden p-5"> */}
-        <PaginatedTable
-        columns={["No.", "Created Date", "Name", "Actions"]}
-        data={GetProducts?.data || []}
+      <PaginatedTable
+        columns={["No.", "Code", "Type", "Actions"]}
+        data={GetProducts?.products || []}
         page={page}
         totalPages={totalPages}
         onPageChange={handlePageChange}
         renderRow={(item, index) => (
           <tr key={item.id}>
             <td>{skip + index + 1}.</td>
-            <td>{(item.created_at)?.split("T")[0]}</td>
-            <td>{item.name}</td>
+            <td>
+              {item.meta?.createdAt
+                ? new Date(item.meta.createdAt).toISOString().split("T")[0]
+                : ""}
+            </td>
+            <td>{item.title}</td>
             <td>
               <Button
                 variant="ghost"
                 size="icon"
                 className="text-yellow-600 hover:text-yellow-700"
-                onClick={() => navigate(`/coa/coa-edit/${item.id}`)}
               >
                 <SquarePenIcon size={30} />
               </Button>
@@ -94,14 +90,13 @@ const Quality = () => {
               >
                 <Trash2Icon size={30} />
               </Button>
-              <Button
+              {/* <Button
                 variant="ghost"
                 size="icon"
                 className="text-[#00C02A] hover:text-[#00C02A]"
-                onClick={() => navigate(`/coa/coa-detail/${item.id}`)}
               >
                 <EyeIcon size={30} />
-              </Button>
+              </Button> */}
             </td>
           </tr>
         )}
@@ -111,4 +106,4 @@ const Quality = () => {
   )
 }
 
-export default Quality
+export default COADetail

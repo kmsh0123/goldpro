@@ -47,6 +47,26 @@ const AppSidebarAccordion = () => {
           </Link>
         </div>
       )}
+      
+{/* Charts of Account */}
+      {coaItem && (
+        <div className="px-[15px] py-2">
+          <Link
+            to={coaItem.url}
+            className={`flex items-center gap-[10px] ${
+              location.pathname.includes("/coa")
+                  ? "text-[#dea519] font-extrabold"
+                  : "text-[#939393]"
+              }`}
+          >
+            <coaItem.icon className="w-5 h-5" />
+            <span className="text-[16px] font-[600] leading-[20px]">
+              {coaItem.title}
+            </span>
+          </Link>
+        </div>
+      )}
+
 
       {/* Inventory Accordion */}
       {inventoryItem && (
@@ -211,23 +231,7 @@ const AppSidebarAccordion = () => {
         </Accordion>
       )}
 
-      {coaItem && (
-        <div className="px-[15px] py-2">
-          <Link
-            to={coaItem.url}
-            className={`flex items-center gap-[10px] ${
-              location.pathname === coaItem.url
-                ? "text-[#dea519] font-extrabold"
-                : "text-[#939393]"
-            }`}
-          >
-            <coaItem.icon className="w-5 h-5" />
-            <span className="text-[16px] font-[600] leading-[20px]">
-              {coaItem.title}
-            </span>
-          </Link>
-        </div>
-      )}
+      
     </>
   );
 };

@@ -3,6 +3,8 @@ import Sidebar from './Sidebar/app-sidebar'
 import { Outlet } from 'react-router-dom'
 import { SidebarProvider } from '../ui/sidebar'
 import AppSidebar from './Sidebar/app-sidebar'
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const Layout = () => {
   const [open, setOpen] = useState(true)

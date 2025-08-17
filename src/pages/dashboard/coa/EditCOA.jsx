@@ -21,7 +21,11 @@ import 'react-toastify/dist/ReactToastify.css';
 
 
 
-const CreateCOA = () => {
+const EditCOA = () => {
+  const [code, setCode] = useState("");
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [open, setOpen] = useState(false);
   const nav = useNavigate();
   const [coaCreate] = useCreateCoaMutation();
 
@@ -61,7 +65,7 @@ const CreateCOA = () => {
         <span onClick={() => window.history.back()} className="cursor-pointer">
           <ChevronLeftIcon />
         </span>
-        Create Charts of Accounts
+        Edit Charts of Accounts
       </h1>
 
       <div className="border-b-2"></div>
@@ -167,4 +171,4 @@ const CreateCOA = () => {
   );
 };
 
-export default CreateCOA;
+export default EditCOA;

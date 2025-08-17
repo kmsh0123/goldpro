@@ -8,7 +8,7 @@ const routerRegister = [
 const routes = createBrowserRouter(routerRegister, {
     future: {
     v7_skipActionErrorRevalidation: true,
-    v7_startTransition: true, // ✅ add this line
+    v7_startTransition: true,
   },
 });
 

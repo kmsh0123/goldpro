@@ -7,7 +7,7 @@ import Type from "@/pages/dashboard/inventory/Type/Type.jsx";
 import Quality from "@/pages/dashboard/inventory/Quality/Quality.jsx";
 import Category from "@/pages/dashboard/inventory/Category/Category.jsx";
 import Product from "@/pages/dashboard/inventory/Product/Product.jsx";
-import POS from "@/pages/dashboard/sale/POS.jsx";
+import POS from "@/pages/dashboard/sale/Customer/POS/POS.jsx";
 import SaleList from "@/pages/dashboard/sale/SaleList.jsx";
 import SaleReport from "@/pages/dashboard/sale/SaleReport.jsx";
 import CustomerList from "@/pages/dashboard/sale/Customer/CustomerList.jsx";
@@ -26,6 +26,10 @@ import CreateCategory from "@/pages/dashboard/inventory/Category/CreateCategory.
 import CreateProduct from "@/pages/dashboard/inventory/Product/CreateProduct.jsx";
 import Stock from "@/pages/dashboard/stock/Stock.jsx";
 import CreateCustomer from "@/pages/dashboard/sale/Customer/CreateCustomer.jsx";
+import CreateCOA from "@/pages/dashboard/coa/CreateCOA.jsx";
+import COADetail from "@/pages/dashboard/coa/coa_detail/COA-detail.jsx";
+import CreateCOADetail from "@/pages/dashboard/coa/coa_detail/CreateCOA-detail.jsx";
+import EditCOA from "@/pages/dashboard/coa/EditCOA.jsx";
 
 const dashboardRoute = [
   {
@@ -33,10 +37,14 @@ const dashboardRoute = [
     element: <Layout />,
     errorElement: <NotFound />,
     children: [
-      {
-        path: "/dashboard",
+       {
+        index: true,
         element: <Home />,
       },
+      // {
+      //   path: "/dashboard",
+      //   element: <Home />,
+      // },
       // Inventory
       {
         path: "/inventory/type",
@@ -136,7 +144,24 @@ const dashboardRoute = [
       {
         path : "/coa/coa-list",
         element: <COA />,
-      }
+      },
+      {
+        path : "/coa/coa-create",
+        element: <CreateCOA />,
+      },
+      {
+        path : "/coa/coa-edit/:id",
+        element: <EditCOA />,
+      },
+      {
+        path : "/coa/coa-detail/:id",
+        element: <COADetail />,
+      },
+      {
+        path : "/coa/coa-detail-create",
+        element: <CreateCOADetail />,
+      },
+
       //COA
 
 
