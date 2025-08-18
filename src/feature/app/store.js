@@ -5,7 +5,7 @@ import { typeApi } from '../api/inventory/typeApi'
 import { qualityApi } from '../api/inventory/qualityApi'
 import { categoryApi } from '../api/inventory/categoryApi'
 import cartSlice from '../service/cartSlice'
-import { customerApi } from '../api/saleApi/customerApi'
+import { subCoaApi } from '../api/subCoaApi/subCoaApi'
 
 export const store = configureStore({
   reducer: {
@@ -14,7 +14,7 @@ export const store = configureStore({
     [qualityApi.reducerPath]: qualityApi.reducer,
     [categoryApi.reducerPath]: categoryApi.reducer,
     [coaApi.reducerPath]: coaApi.reducer,
-    [customerApi.reducerPath]: customerApi.reducer,
+    [subCoaApi.reducerPath]: subCoaApi.reducer,
     cart: cartSlice,
   },
   middleware: (getDefaultMiddleware) =>
@@ -24,6 +24,6 @@ export const store = configureStore({
       typeApi.middleware,
       qualityApi.middleware,
       categoryApi.middleware,
-      customerApi.middleware,
+      subCoaApi.middleware,
     ),
 })

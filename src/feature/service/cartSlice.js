@@ -1,19 +1,18 @@
 import { createSlice } from '@reduxjs/toolkit'
 
 const initialState = {
-   goldWeight: {
+  goldWeight: {
     kyat: "",
     pae: "",
     yway: "",
     gram: "",
   },
-  alyaut : {
+  shweChain: {          // <--- add shweChain here
     kyat: "",
     pae: "",
     yway: "",
     gram: "",
   },
-  laathk : "",
   items: [],
 }
 
@@ -24,19 +23,16 @@ export const cartSlice = createSlice({
     addToCart: (state, action) => {
       state.items.push(action.payload);
     },
-     setGoldWeight: (state, action) => {
+    setGoldWeight: (state, action) => {
       state.goldWeight = { ...state.goldWeight, ...action.payload };
     },
-     setGoldAlyaut: (state, action) => {
-      state.alyaut = { ...state.alyaut, ...action.payload };
-    },
-     setGoldLaathk: (state, action) => {
-      state.laathk = action.payload;
+    setShweChain: (state, action) => {      // <--- new reducer
+      state.shweChain = { ...state.shweChain, ...action.payload };
     },
   },
 })
 
 // Action creators are generated for each case reducer function
-export const { addToCart,setGoldWeight,setGoldAlyaut,setGoldLaathk  } = cartSlice.actions
+export const { addToCart, setGoldWeight, setShweChain } = cartSlice.actions
 
 export default cartSlice.reducer
