@@ -6,6 +6,7 @@ import { Table, TableHeader, TableRow, TableHead, TableCell, TableBody } from "@
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import PaginatedTable from '@/components/dashboard/ResuableComponents/PaginatedTable';
 import { useGetProductQuery } from '@/feature/api/inventory/productApi';
+import { useGetSubCoaQuery } from '@/feature/api/subCoaApi/subCoaApi';
 
 
 const COADetail = () => {
@@ -30,6 +31,10 @@ const COADetail = () => {
         navigate(`?page=${newPage}`);
       }
     };
+
+    const {data : GetSubCoa} = useGetSubCoaQuery();
+
+    
   
   
   return (
@@ -61,8 +66,8 @@ const COADetail = () => {
       {/* Table */}
       {/* <Card className="overflow-hidden p-5"> */}
       <PaginatedTable
-        columns={["No.", "Code", "Type", "Actions"]}
-        data={GetProducts?.products || []}
+        columns={["No.", "Date","Code", "Type", "Actions"]}
+        data={GetSubCoa?.data || []}
         page={page}
         totalPages={totalPages}
         onPageChange={handlePageChange}
@@ -70,11 +75,12 @@ const COADetail = () => {
           <tr key={item.id}>
             <td>{skip + index + 1}.</td>
             <td>
-              {item.meta?.createdAt
-                ? new Date(item.meta.createdAt).toISOString().split("T")[0]
+              {item?.created_at
+                ? new Date(item?.created_at).toISOString().split("T")[0]
                 : ""}
             </td>
-            <td>{item.title}</td>
+            <td>{item.start_code}</td>
+            <td>{item.type}</td>
             <td>
               <Button
                 variant="ghost"

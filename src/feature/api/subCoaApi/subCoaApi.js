@@ -1,46 +1,46 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
-export const coaApi = createApi({
-  reducerPath: "coaApi",
+export const subCoaApi = createApi({
+  reducerPath: "subCoaApi",
   baseQuery: fetchBaseQuery({
     baseUrl: import.meta.env.VITE_API_ENDPOINT,
   }),
-  tagTypes: ["coaApi"],
+  tagTypes: ["subCoaApi"],
 
   endpoints: (builder) => ({
-    createCoa: builder.mutation({
+    createSubCoa: builder.mutation({
       query: (formData) => ({
-        url: `chart_of_accounts/create`,
+        url: `sub_coas/create`,
         method: "POST",
         body : formData,
       }),
-      invalidatesTags: ["coaApi"],
+      invalidatesTags: ["subCoaApi"],
     }),
-    getCoa: builder.query({
+    getSubCoa: builder.query({
       query: () => ({
-        url: "chart_of_accounts/list",
+        url: "sub_coas/list",
         method: "GET",
       }),
-      providesTags: ["coaApi"],
+      providesTags: ["subCoaApi"],
     }),
-    EditCoa: builder.mutation({
+    EditSubCoa: builder.mutation({
       query: (formData) => ({
-        url: `chart_of_accounts/edit`,
+        url: `sub_coas/edit`,
         method: "POST",
         body : formData,
       }),
-      invalidatesTags: ["coaApi"],
+      invalidatesTags: ["subCoaApi"],
     }),
     // logout: builder.mutation({
     //   query: (token) => ({
     //     url: "/user-logout",
     //     method: "POST",
-    //     headers: {coaApiorization : `Bearer ${token}`}
+    //     headers: {subCoaApiorization : `Bearer ${token}`}
     //   }),
-    //   invalidatesTags: ["coaApi"],
+    //   invalidatesTags: ["subCoaApi"],
     // }),
   }),
 });
 
 
-export const {useCreateCoaMutation,useGetCoaQuery} = coaApi;
+export const {useCreateSubCoaMutation,useGetSubCoaQuery} = subCoaApi;

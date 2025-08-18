@@ -9,8 +9,8 @@ export const productApi = createApi({
   tagTypes: ["productApi"],
   endpoints: (builder) => ({
     getProduct: builder.query({
-      query: ({ limit, skip } = {}) => ({
-        url: `products?limit=${limit}&skip=${skip}`,
+      query: () => ({
+        url: `product/list`,
         method: "GET",
       }),
       providesTags: ["productApi"],

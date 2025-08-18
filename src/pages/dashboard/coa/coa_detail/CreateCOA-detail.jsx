@@ -17,6 +17,10 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
+import { useCreateSubCoaMutation } from "@/feature/api/subCoaApi/subCoaApi";
+import { Controller, useForm } from "react-hook-form";
+import { useGetCoaQuery } from "@/feature/api/coaApi/coaApi";
+import { toast } from "react-toastify";
 
 const codes = [
   { value: "R", label: "IT0001" },
@@ -45,16 +49,48 @@ const CreateCOADetail = () => {
   const [code, setCode] = useState("");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [open, setOpen] = useState(false);
-  const navigate = useNavigate();
+  const [openType, setOpenType] = useState(false);
+  const nav = useNavigate();
+  const [COADetailCreate] = useCreateSubCoaMutation();  
+  const [searchType, setSearchType] = useState("");
+  
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setName("")
-    setCode("")
-    setDescription("")
-    console.log({ code, name,description });
-  };
+  const {
+        register,
+        handleSubmit,
+        reset,
+        watch,
+        control,
+        formState: { errors },
+      } = useForm({
+        defaultValues: {
+        startCode: "",
+        coaId: "",
+        type: "",
+    },
+      });
+
+      const handleCreateSubCoa = async (formData) => {
+        try {
+          const {data} = await COADetailCreate(formData);
+          console.log("COA created successfully:", data);
+          toast.success("COA created successfully!");
+          reset();
+          nav("/coa/coa-list");
+        } catch (error) {
+          console.error("Error create customer");
+        } 
+      }
+  const { data: GetCoa } = useGetCoaQuery();
+  const selectedCoaId = watch("coaId");
+
+  const selectedCoaName =
+    GetCoa?.data?.find((item) => item.id.toString() === selectedCoaId)?.type ||
+    "";
+  
+    const filteredType = GetCoa?.data?.filter((item) =>
+    item.type.toLowerCase().includes(searchType.toLowerCase())
+  );
 
   return (
     <div className="space-y-4">
@@ -68,73 +104,78 @@ const CreateCOADetail = () => {
 
       <div className="border-b-2"></div>
 
-      <form onSubmit={handleSubmit} className="space-y-6 max-w-xs">
+      <form onSubmit={handleSubmit(handleCreateSubCoa)} className="space-y-6 max-w-xs">
         {/* Code Searchable Select */}
         <div>
-          <label className="block mb-1 font-medium">Code</label>
-          <Popover open={open} onOpenChange={setOpen}>
-            <PopoverTrigger asChild>
-              <div className="w-full">
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  aria-expanded={open}
-                  className="w-full justify-between"
-                >
-                  {code
-                    ? codes.find((item) => item.value === code)?.label
-                    : "Select Code"}
-                </Button>
-              </div>
-            </PopoverTrigger>
-            <PopoverContent className="w-80 p-0 ">
-              <Command>
-                <CommandInput placeholder="Search code..." />
-                <CommandEmpty>No code found.</CommandEmpty>
-                <CommandList className="max-h-40 overflow-y-auto">
-                  <CommandGroup>
-                    {codes.map((item) => (
-                      <CommandItem
-                        key={item.value}
-                        value={item.label}
-                        onSelect={() => {
-                          setCode(item.value);
-                          setOpen(false);
-                        }}
-                      >
-                        <Check
-                          className={cn(
-                            "mr-2 h-4 w-4",
-                            code === item.value ? "opacity-100" : "opacity-0"
-                          )}
-                        />
-                        {item.label}
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
+          <label className="block mb-1 font-medium">COA</label>
+          <div>
+          <Controller
+            name="coaId"
+            control={control}
+            render={({ field }) => (
+              <Popover open={openType} onOpenChange={setOpenType}>
+                <PopoverTrigger asChild>
+                 <div>
+                   <Button
+                    type="button"
+                    variant="outline"
+                    role="combobox"
+                    className="w-full justify-between"
+                  >
+                    {selectedCoaName || "Select Coa"}
+                  </Button>
+                 </div>
+                </PopoverTrigger>
+                <PopoverContent className="w-80 p-0">
+                  <Command>
+                    <CommandInput
+                      placeholder="Search type..."
+                      value={searchType}
+                      onValueChange={setSearchType}
+                    />
+                    <CommandList className="max-h-40 overflow-y-auto">
+                      <CommandEmpty>No results found.</CommandEmpty>
+                      <CommandGroup>
+                        {filteredType?.map((item) => (
+                          <CommandItem
+                            key={item.id}
+                            onSelect={() => {
+                              field.onChange(item.id.toString());
+                              setOpenType(false);
+                            }}
+                          >
+                            {item.type}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            )}
+          />
+        </div>
         </div>
 
         {/* Name Input */}
         <div>
-          <label className="block mb-1 font-medium">Name</label>
+          <label className="block mb-1 font-medium">Code</label>
           <Input
-            placeholder="Enter Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+            placeholder="Enter COA"
+            {...register("startCode")}
+            // value={name}
+            // onChange={(e) => setName(e.target.value)}
             className="bg-gray-100"
           />
         </div>
 
         <div>
-          <label className="block mb-1 font-medium">Description</label>
+          <label className="block mb-1 font-medium">Type</label>
           <Input
-            placeholder="Enter Description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Enter Type"
+            // value={description}
+            // onChange={(e) => setDescription(e.target.value)}
+            {...register("type")}
             className="bg-gray-100"
           />
         </div>
@@ -145,7 +186,7 @@ const CreateCOADetail = () => {
             type="button"
             variant="outline"
             className="bg-gray-100 text-gray-700"
-            onClick={() => navigate(-1)}
+            onClick={() => nav(-1)}
           >
             Cancel
           </Button>
