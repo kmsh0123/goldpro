@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/pagination";
 import { useGetProductQuery } from "@/feature/api/inventory/productApi";
 import PaginatedTable from "@/components/dashboard/ResuableComponents/PaginatedTable";
+import { useGetCustomerQuery } from "@/feature/api/saleApi/customerApi";
 
 const CustomerList = () => {
   const [searchParams] = useSearchParams();
@@ -33,10 +34,10 @@ const CustomerList = () => {
   const skip = (page - 1) * limit;
 
   // Fetch products
-  const { data: GetProducts } = useGetProductQuery({ limit, skip });
+  const { data: GetCustomer } = useGetCustomerQuery();
 
   // Total pages
-  const totalItems = GetProducts?.total || 0;
+  const totalItems = GetCustomer?.total || 0;
   const totalPages = Math.ceil(totalItems / limit);
 
   // Change page
@@ -81,7 +82,7 @@ const CustomerList = () => {
 
      <PaginatedTable
         columns={["No.", "Date", "Customer Name", "Actions"]}
-        data={GetProducts?.products || []}
+        data={GetCustomer?.data || []}
         page={page}
         totalPages={totalPages}
         onPageChange={handlePageChange}
@@ -89,11 +90,11 @@ const CustomerList = () => {
           <tr key={item.id}>
             <td>{skip + index + 1}.</td>
             <td>
-              {item.meta?.createdAt
-                ? new Date(item.meta.createdAt).toISOString().split("T")[0]
+              {item.created_at
+                ? new Date(item.created_at).toISOString().split("T")[0]
                 : ""}
             </td>
-            <td>{item.title}</td>
+            <td>{item.customer_name}</td>
             <td>
               <Button
                 variant="ghost"

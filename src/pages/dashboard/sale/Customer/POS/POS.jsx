@@ -82,26 +82,38 @@ const POS = () => {
               <tbody>
                 {/* Example row */}
                 <tr>
-                  <td className="border p-1">1</td>
-                  <td className="border p-1">Ring</td>
+                   {items?.map((item, index) => (
+                    <React.Fragment key={index}>
+                      <td className="border p-1">{item.productId || ""}</td>
+                      <td className="border p-1">{item.productName || ""}</td>
+                    </React.Fragment>
+                  ))}
                   <td className="border p-1">2</td>
                   {items?.map((item, index) => (
                     <React.Fragment key={index}>
-                      <td className="border p-1">{item.kyat}</td>
-                      <td className="border p-1">{item.pae}</td>
-                      <td className="border p-1">{item.yway}</td>
-                      <td className="border p-1">{item.gram}</td>
+                      <td className="border p-1">{item.kyat || 0}</td>
+                      <td className="border p-1">{item.pae || 0}</td>
+                      <td className="border p-1">{item.yway || 0}</td>
+                      <td className="border p-1">{item.gram || 0}</td>
                     </React.Fragment>
                   ))}
+                   {items?.map((item, index) => (
+                    <React.Fragment key={index}>
+                      <td className="border p-1">{item.laathk || 0}</td>
+                    </React.Fragment>
+                  ))}
+                   {items?.map((item, index) => (
+                    <React.Fragment key={index}>
+                      <td className="border p-1">{item.alyautKyat || 0}</td>
+                      <td className="border p-1">{item.alyautPae || 0}</td>
+                      <td className="border p-1">{item.alyautYway || 0}</td>
+                      <td className="border p-1">{item.alyautGram || 0}</td>
+                    </React.Fragment>
+                  ))}
+                  {/* <td className="border p-1">500</td>
                   <td className="border p-1">500</td>
                   <td className="border p-1">500</td>
-                  <td className="border p-1">500</td>
-                  <td className="border p-1">500</td>
-                  <td className="border p-1">500</td>
-                  <td className="border p-1">500</td>
-                  <td className="border p-1">500</td>
-                  <td className="border p-1">500</td>
-                  <td className="border p-1">500</td>
+                  <td className="border p-1">500</td> */}
                 </tr>
               </tbody>
               <tfoot>
