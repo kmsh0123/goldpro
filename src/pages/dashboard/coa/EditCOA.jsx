@@ -19,17 +19,15 @@ import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 
-
-
 const EditCOA = () => {
   const [code, setCode] = useState("");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [open, setOpen] = useState(false);
   const nav = useNavigate();
-  const [coaCreate] = useCreateCoaMutation();
+  const [coaEdit] = useEditCoaMutation();
 
-   const {
+  const {
       register,
       handleSubmit,
       reset,
@@ -44,11 +42,11 @@ const EditCOA = () => {
   //   console.log({ code, name,description });
   // };
 
-  const handleCreateCoa = async (formData) => {
+  const handleEditCoa = async (formData) => {
   try {
-    const {data} = await coaCreate(formData);
-    console.log("COA created successfully:", data);
-    toast.success("COA created successfully!");
+    const {data} = await coaEdit(formData);
+    console.log("COA updated successfully:", data);
+    toast.success("COA updated successfully!");
     reset();
     nav("/coa/coa-list");
   } catch (error) {
@@ -70,7 +68,7 @@ const EditCOA = () => {
 
       <div className="border-b-2"></div>
 
-      <form onSubmit={handleSubmit(handleCreateCoa)} className="space-y-6 max-w-xs">
+      <form onSubmit={handleSubmit(handleEditCoa)} className="space-y-6 max-w-xs">
         {/* Code Searchable Select */}
         <div>
           <label className="block mb-1 font-medium">Code</label>
@@ -155,7 +153,7 @@ const EditCOA = () => {
             type="button"
             variant="outline"
             className="bg-gray-100 text-gray-700"
-            onClick={() => navigate(-1)}
+            onClick={() => window.history.back()}
           >
             Cancel
           </Button>

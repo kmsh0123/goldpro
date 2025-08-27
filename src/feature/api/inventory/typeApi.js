@@ -23,6 +23,23 @@ export const typeApi = createApi({
       }),
       invalidatesTags: ["typeApi"],
     }),
+    updateType: builder.mutation({
+      query: ({id,formData}) => ({
+        url: `type/update/${id}`,
+        method: "PUT",
+        body: formData,
+      }),
+      invalidatesTags: ["typeApi"],
+    }),
+
+    deleteType: builder.mutation({
+      query: (id) => ({
+        url: `type/delete/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["typeApi"],
+    }),
+
     // logout: builder.mutation({
     //   query: (token) => ({
     //     url: "/user-logout",
@@ -34,4 +51,5 @@ export const typeApi = createApi({
   }),
 });
 
-export const {useGetTypeQuery,useCreateTypeMutation} = typeApi;
+export const {useGetTypeQuery,useCreateTypeMutation,useUpdateTypeMutation,useDeleteTypeMutation} = typeApi;
+
