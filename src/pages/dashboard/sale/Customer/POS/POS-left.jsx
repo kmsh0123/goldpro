@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -24,24 +24,62 @@ import { Button } from "@/components/ui/button";
 import { useDispatch, useSelector } from "react-redux";
 import {
   addToCart,
-  setGoldAlyaut,
   setGoldLaathk,
   setGoldWeight,
+  setpayment,
+  setCash,
+  setAlyut,
+  resetGoldWeight,
+  resetpayment,
+  addPayment,
 } from "@/feature/service/cartSlice";
 import { useGetCustomerQuery } from "@/feature/api/saleApi/customerApi";
 import { Controller, useForm } from "react-hook-form";
 import { useGetProductQuery } from "@/feature/api/inventory/productApi";
+import { addToPayment } from "@/feature/service/paymentSlice";
+import { useGetTypeQuery } from "@/feature/api/inventory/typeApi";
+import { useGetQualityQuery } from "@/feature/api/inventory/qualityApi";
+import { useGetCategoryQuery } from "@/feature/api/inventory/categoryApi";
 
 const POSLeft = () => {
   const [searchProductName, setSearchProductName] = useState("");
   const [searchCustomerName, setSearchCustomerName] = useState("");
+  const [searchTypeName, setSearchTypeName] = useState("");
+  const [searchQuality, setSearchQuality] = useState("");
+  const [searchCategory, setSearchCategory] = useState("");
+
+  const [voucherCode, setVoucherCode] = useState("");
+  const [todayRate, setTodayRate] = useState("");
+  const [stock, setStock] = useState("");
+  const [qty, setQty] = useState("");
   const [openProduct, setOpenProduct] = useState(false);
   const [openCustomer, setOpenCustomer] = useState(false);
+  const [openType, setOpenType] = useState(false);
+  const [openQuality, setOpenQuality] = useState(false);
+  const [openCategory, setOpenCategory] = useState(false);
 
   const dispatch = useDispatch();
   const { kyat, pae, yway, gram } = useSelector(
     (state) => state.cart.goldWeight
   );
+
+  const {
+    kyat: alyautKyat,
+    pae: alyautPae,
+    yway: alyautYway,
+    gram: alyautGram,
+  } = useSelector((state) => state.cart.alyut);
+
+  const {
+    kyat: payKyat,
+    pae: payPae,
+    yway: payYway,
+    gram: payGram,
+  } = useSelector((state) => state.cart.payment);
+
+  const cash = useSelector((state) => state.cart.cash);
+
+  const { laathk } = useSelector((state) => state.cart);
 
   const {
     register,
@@ -59,9 +97,15 @@ const POSLeft = () => {
 
   const { data: GetProducts } = useGetProductQuery();
   const { data: GetCustomer } = useGetCustomerQuery();
+  const { data: GetType } = useGetTypeQuery();
+  const { data: GetQuality } = useGetQualityQuery();
+  const { data: GetCategory } = useGetCategoryQuery();
 
   const selectedProductId = watch("productId");
   const selectedCustomerId = watch("customerId");
+  const selectedTypeId = watch("typeId");
+  const selectedQualityId = watch("qualityId");
+  const selectedCategoryId = watch("categoryId");
 
   const selectedProductName =
     GetProducts?.data?.find((item) => item.id.toString() === selectedProductId)
@@ -71,6 +115,30 @@ const POSLeft = () => {
     GetCustomer?.data?.find((item) => item.id.toString() === selectedCustomerId)
       ?.customer_name || "";
 
+  const selectedTypeName =
+    GetType?.data?.find((item) => item.id.toString() === selectedTypeId)
+      ?.name || "";
+
+  const selectedQualityName =
+    GetQuality?.data?.find((item) => item.id.toString() === selectedQualityId)
+      ?.name || "";
+
+  const selectedCategoryName =
+    GetCategory?.data?.find((item) => item.id.toString() === selectedCategoryId)
+      ?.name || "";
+
+  useEffect(() => {
+    if (selectedProductId) {
+      const stockValue =
+        GetProducts?.data?.find(
+          (item) => item.id.toString() === selectedProductId
+        )?.stock || 0;
+      setStock(stockValue);
+    } else {
+      setStock("");
+    }
+  }, [selectedProductId, GetProducts]);
+
   const filteredProducts = GetProducts?.data?.filter((item) =>
     item.name.toLowerCase().includes(searchProductName.toLowerCase())
   );
@@ -78,14 +146,18 @@ const POSLeft = () => {
   const filteredCustomers = GetCustomer?.data?.filter((item) =>
     item.customer_name.toLowerCase().includes(searchCustomerName.toLowerCase())
   );
-  const {
-    kyat: alyautKyat,
-    pae: alyautPae,
-    yway: alyautYway,
-    gram: alyautGram,
-  } = useSelector((state) => state.cart.alyaut);
 
-  const { laathk } = useSelector((state) => state.cart);
+  const filteredType = GetType?.data?.filter((item) =>
+    item.name.toLowerCase().includes(searchTypeName.toLowerCase())
+  );
+
+  const filteredQuality = GetQuality?.data?.filter((item) =>
+    item.name.toLowerCase().includes(searchQuality.toLowerCase())
+  );
+
+  const filteredCategory = GetCategory?.data?.filter((item) =>
+    item.name.toLowerCase().includes(searchCategory.toLowerCase())
+  );
 
   const kyatPaeYwayToGram = (kyat, pae, yway) => {
     const totalKyat =
@@ -127,7 +199,7 @@ const POSLeft = () => {
   const handleAlyautChange = (field, value) => {
     if (field === "gram") {
       const { kyat, pae, yway } = gramToKyatPaeYway(parseFloat(value) || 0);
-      dispatch(setGoldAlyaut({ kyat, pae, yway, gram: value }));
+      dispatch(setAlyut({ kyat, pae, yway, gram: value }));
     } else {
       const newState = {
         kyat: alyautKyat,
@@ -141,8 +213,33 @@ const POSLeft = () => {
         newState.pae,
         newState.yway
       );
-      dispatch(setGoldAlyaut({ ...newState, gram: newGram }));
+      dispatch(setAlyut({ ...newState, gram: newGram }));
     }
+  };
+
+  const handlePaymentChange = (field, value) => {
+    if (field === "gram") {
+      const { kyat, pae, yway } = gramToKyatPaeYway(parseFloat(value) || 0);
+      dispatch(setpayment({ kyat, pae, yway, gram: value }));
+    } else {
+      const newState = {
+        kyat: payKyat,
+        pae: payPae,
+        yway: payYway,
+        gram: payGram,
+      };
+      newState[field] = value;
+      const newGram = kyatPaeYwayToGram(
+        newState.kyat,
+        newState.pae,
+        newState.yway
+      );
+      dispatch(setpayment({ ...newState, gram: newGram }));
+    }
+  };
+
+  const handleCashChange = (value) => {
+    dispatch(setCash(value));
   };
 
   const handleLaathkChange = (value) => {
@@ -150,23 +247,112 @@ const POSLeft = () => {
     console.log(value);
   };
 
+  // const handleAdd = () => {
+  //   const selectedQuality = GetQuality?.data?.find(
+  //     (q) => q.id.toString() === selectedQualityId
+  //   );
+
+  //   // const totalAlyutGram =
+  //   //   (parseFloat(alyautGram) || 0) * (parseFloat(qty) || 1);
+
+  //   dispatch(
+  //     addToCart({
+  //       productId: selectedProductId,
+  //       typeId: selectedTypeId,
+  //       qualityId: selectedQualityId,
+  //       qualityName: selectedQuality?.name || "",
+  //       karat: selectedQuality?.name?.replace("K", "") || 24,
+  //       categoryId: selectedCategoryId,
+  //       productName: selectedProductName,
+  //       customerName: selectedCustomerName,
+  //       voucherCode,
+  //       todayRate,
+  //       stock,
+  //       qty,
+  //       kyat,
+  //       pae,
+  //       yway,
+  //       gram,
+  //       alyautKyat,
+  //       alyautPae,
+  //       alyautYway,
+  //       alyautGram,
+  //       paymentKyat: payKyat,
+  //       payGram: payGram,
+  //       payPae: payPae,
+  //       payYway: payYway,
+  //       laathk: parseFloat(laathk) || 0,
+  //     })
+  //   );
+  //   // dispatch(resetGoldWeight());
+  //   // dispatch(setAlyut({ kyat: "", pae: "", yway: "", gram: "" }));
+  //   // setStock("");
+  // };
+
   const handleAdd = () => {
+  const selectedQuality = GetQuality?.data?.find(
+    (q) => q.id.toString() === selectedQualityId
+  );
+
+  const newItem = {
+    productId: selectedProductId,
+    typeId: selectedTypeId,
+    qualityId: selectedQualityId,
+    qualityName: selectedQuality?.name || "",
+    karat: selectedQuality?.name?.replace("K", "") || 24,
+    categoryId: selectedCategoryId,
+    productName: selectedProductName,
+    customerName: selectedCustomerName,
+    voucherCode,
+    todayRate,
+    stock,
+    qty,
+    kyat,
+    pae,
+    yway,
+    gram,
+    alyautKyat,
+    alyautPae,
+    alyautYway,
+    alyautGram,
+    paymentKyat: payKyat,
+    payGram: payGram,
+    payPae: payPae,
+    payYway: payYway,
+    laathk: parseFloat(laathk) || 0,
+  };
+
+  dispatch(addToCart(newItem));
+  
+  // Reset form fields if needed
+  reset();
+  dispatch(resetGoldWeight());
+  dispatch(resetAlyutWeight());
+  // setQty("");
+  // setStock("");
+};
+
+  const handlePayment = () => {
     dispatch(
-      addToCart({
-        productId: selectedProductId,
-        productName: selectedProductName,
-        customerNme: selectedCustomerName,
-        kyat,
-        pae,
-        yway,
-        gram,
-        alyautKyat,
-        alyautPae,
-        alyautYway,
-        alyautGram,
-        laathk,
+      addPayment({
+        kyat: payKyat,
+        pae: payPae,
+        yway: payYway,
+        gram: payGram,
+        cash,
       })
     );
+    // dispatch(resetpayment());
+  };
+
+  const handleQtyChange = (e) => {
+    const value = Number(e.target.value);
+    setQty(value);
+
+    if (value > stock) {
+      alert("Not enough stock!");
+      setQty("");
+    }
   };
 
   return (
@@ -239,8 +425,31 @@ const POSLeft = () => {
         </div> */}
         <div className="w-1/2">
           <label className="block mb-1 font-medium">Voucher Code</label>
-          <Input placeholder="Voucher Code" className="" />
+          <Input
+            value={voucherCode}
+            onChange={(e) => setVoucherCode(e.target.value)}
+            placeholder="Voucher Code"
+            className=""
+          />
         </div>
+
+        <div className="w-1/2">
+          <label className="block mb-1 font-medium">Today Gold Rate</label>
+          <Input
+            value={todayRate}
+            onChange={(e) => setTodayRate(e.target.value)}
+            placeholder="Today Gold Rate"
+            className=""
+          />
+        </div>
+
+        {/* <div className="w-1/2">
+          <label className="block mb-1 font-medium">Type</label>
+          <Input 
+          value={voucherCode}
+          onChange={(e) => setVoucherCode(e.target.value)}
+          placeholder="Voucher Code" className="" />
+        </div> */}
       </div>
 
       {/* Product Info */}
@@ -345,13 +554,13 @@ const POSLeft = () => {
           />
         </div>
 
-        {/* <div>
-            <label className="block mb-1 font-medium">Product Name</label>
-            <Controller
-            name="productId"
+        <div>
+          <label className="block mb-1 font-medium">Type</label>
+          <Controller
+            name="typeId"
             control={control}
             render={({ field }) => (
-              <Popover open={open} onOpenChange={setOpen}>
+              <Popover open={openType} onOpenChange={setOpenType}>
                 <PopoverTrigger asChild>
                   <div>
                     <Button
@@ -360,7 +569,7 @@ const POSLeft = () => {
                       role="combobox"
                       className="w-full justify-between"
                     >
-                      {selectedProductName || "Select Product"}
+                      {selectedTypeName || "Select Type"}
                     </Button>
                   </div>
                 </PopoverTrigger>
@@ -368,18 +577,18 @@ const POSLeft = () => {
                   <Command>
                     <CommandInput
                       placeholder="Search type..."
-                      value={searchProductName}
-                      onValueChange={setSearchProductName}
+                      value={searchTypeName}
+                      onValueChange={setSearchTypeName}
                     />
                     <CommandList className="max-h-40 overflow-y-auto">
                       <CommandEmpty>No results found.</CommandEmpty>
                       <CommandGroup>
-                        {filteredProducts?.map((item) => (
+                        {filteredType?.map((item) => (
                           <CommandItem
                             key={item.id}
                             onSelect={() => {
                               field.onChange(item.id.toString());
-                              setOpen(false);
+                              setOpenType(false);
                             }}
                           >
                             {item.name}
@@ -392,14 +601,14 @@ const POSLeft = () => {
               </Popover>
             )}
           />
-          </div> */}
-        {/* <div>
-            <label className="block mb-1 font-medium">Product Name</label>
-            <Controller
-            name="productId"
+        </div>
+        <div>
+          <label className="block mb-1 font-medium">Gold Quality</label>
+          <Controller
+            name="qualityId"
             control={control}
             render={({ field }) => (
-              <Popover open={open} onOpenChange={setOpen}>
+              <Popover open={openQuality} onOpenChange={setOpenQuality}>
                 <PopoverTrigger asChild>
                   <div>
                     <Button
@@ -408,7 +617,7 @@ const POSLeft = () => {
                       role="combobox"
                       className="w-full justify-between"
                     >
-                      {selectedProductName || "Select Product"}
+                      {selectedQualityName || "Select Quality"}
                     </Button>
                   </div>
                 </PopoverTrigger>
@@ -416,18 +625,18 @@ const POSLeft = () => {
                   <Command>
                     <CommandInput
                       placeholder="Search type..."
-                      value={searchProductName}
-                      onValueChange={setSearchProductName}
+                      value={searchQuality}
+                      onValueChange={setSearchQuality}
                     />
                     <CommandList className="max-h-40 overflow-y-auto">
                       <CommandEmpty>No results found.</CommandEmpty>
                       <CommandGroup>
-                        {filteredProducts?.map((item) => (
+                        {filteredQuality?.map((item) => (
                           <CommandItem
                             key={item.id}
                             onSelect={() => {
                               field.onChange(item.id.toString());
-                              setOpen(false);
+                              setOpenQuality(false);
                             }}
                           >
                             {item.name}
@@ -440,78 +649,149 @@ const POSLeft = () => {
               </Popover>
             )}
           />
-          </div> */}
+        </div>
+
+        <div>
+          <label className="block mb-1 font-medium">Stock</label>
+          <Input
+            value={stock}
+            readOnly
+            placeholder="Stock"
+            className="w-32 bg-gray-200 cursor-not-allowed"
+          />
+        </div>
+
+        <div className="w-full">
+          <label className="block mb-1 font-medium">Category</label>
+          <Controller
+            name="categoryId"
+            control={control}
+            render={({ field }) => (
+              <Popover open={openCategory} onOpenChange={setOpenCategory}>
+                <PopoverTrigger asChild>
+                  <div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      role="combobox"
+                      className="w-full justify-between"
+                    >
+                      {selectedCategoryName || "Select Category"}
+                    </Button>
+                  </div>
+                </PopoverTrigger>
+                <PopoverContent className="w-80 p-0">
+                  <Command>
+                    <CommandInput
+                      placeholder="Search type..."
+                      value={searchCategory}
+                      onValueChange={setSearchCategory}
+                    />
+                    <CommandList className="max-h-40 overflow-y-auto">
+                      <CommandEmpty>No results found.</CommandEmpty>
+                      <CommandGroup>
+                        {filteredCategory?.map((item) => (
+                          <CommandItem
+                            key={item.id}
+                            onSelect={() => {
+                              field.onChange(item.id.toString());
+                              setOpenCategory(false);
+                            }}
+                          >
+                            {item.name}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            )}
+          />
+        </div>
+
+        <div className="">
+          {/* <label className="block mb-1 font-medium">Quantity</label>
+          <Input
+            value={stock}
+            onChange={(e) => setStock(e.target.value)}
+            placeholder="Quantity"
+            className=""
+          /> */}
+        </div>
         {/* ))} */}
       </div>
 
       {/* Weight */}
       <div>
         <h3 className="font-bold text-sm">Gold Weight</h3>
-        {["ရွှေချိန်"].map((label, index) => (
-          <div key={index} className="mt-2">
-            <p className="text-sm mb-1">{label}</p>
-            <div className="flex gap-2">
-              <Input
-                placeholder="K"
-                value={kyat}
-                onChange={(e) => handleChange("kyat", e.target.value)}
-                className="w-16 bg-gray-100"
-              />
-              <Input
-                placeholder="P"
-                value={pae}
-                onChange={(e) => handleChange("pae", e.target.value)}
-                className="w-16 bg-gray-100"
-              />
-              <Input
-                placeholder="Y"
-                value={yway}
-                onChange={(e) => handleChange("yway", e.target.value)}
-                className="w-16 bg-gray-100"
-              />
-              <Input
-                placeholder="G"
-                value={gram}
-                onChange={(e) => handleChange("gram", e.target.value)}
-                className="w-16 bg-gray-100"
-              />
-            </div>
+        <div className="mt-2">
+          <p className="text-sm mb-1">အလျော့တွက်</p>
+          <div className="flex gap-2">
+            <Input
+              placeholder="K"
+              value={alyautKyat}
+              onChange={(e) => handleAlyautChange("kyat", e.target.value)}
+              className="w-16 bg-gray-100"
+            />
+            <Input
+              placeholder="P"
+              value={alyautPae}
+              onChange={(e) => handleAlyautChange("pae", e.target.value)}
+              className="w-16 bg-gray-100"
+            />
+            <Input
+              placeholder="Y"
+              value={alyautYway}
+              onChange={(e) => handleAlyautChange("yway", e.target.value)}
+              className="w-16 bg-gray-100"
+            />
+            <Input
+              placeholder="G"
+              value={alyautGram}
+              onChange={(e) => handleAlyautChange("gram", e.target.value)}
+              className="w-16 bg-gray-100"
+            />
+            <Input
+              placeholder="Qty"
+              value={qty}
+              onChange={handleQtyChange}
+              className="w-16 bg-gray-100"
+            />
           </div>
-        ))}
+        </div>
       </div>
 
       <div>
-        {["အလျော့တွက်"].map((label, index) => (
-          <div key={index} className="mt-2">
-            <p className="text-sm mb-1">{label}</p>
-            <div className="flex gap-2">
-              <Input
-                placeholder="K"
-                value={alyautKyat}
-                onChange={(e) => handleAlyautChange("kyat", e.target.value)}
-                className="w-16 bg-gray-100"
-              />
-              <Input
-                placeholder="P"
-                value={alyautPae}
-                onChange={(e) => handleAlyautChange("pae", e.target.value)}
-                className="w-16 bg-gray-100"
-              />
-              <Input
-                placeholder="Y"
-                value={alyautYway}
-                onChange={(e) => handleAlyautChange("yway", e.target.value)}
-                className="w-16 bg-gray-100"
-              />
-              <Input
-                placeholder="G"
-                value={alyautGram}
-                onChange={(e) => handleAlyautChange("gram", e.target.value)}
-                className="w-16 bg-gray-100"
-              />
-            </div>
+        <div className="mt-2">
+          <p className="text-sm mb-1">ရွှေချိန်</p>
+          <div className="flex gap-2">
+            <Input
+              placeholder="K"
+              value={kyat}
+              onChange={(e) => handleChange("kyat", e.target.value)}
+              className="w-16 bg-gray-100"
+            />
+            <Input
+              placeholder="P"
+              value={pae}
+              onChange={(e) => handleChange("pae", e.target.value)}
+              className="w-16 bg-gray-100"
+            />
+            <Input
+              placeholder="Y"
+              value={yway}
+              onChange={(e) => handleChange("yway", e.target.value)}
+              className="w-16 bg-gray-100"
+            />
+            <Input
+              placeholder="G"
+              value={gram}
+              onChange={(e) => handleChange("gram", e.target.value)}
+              className="w-16 bg-gray-100"
+            />
           </div>
-        ))}
+        </div>
       </div>
 
       {/* လက်ခ */}
@@ -540,7 +820,61 @@ const POSLeft = () => {
       {/* Payment */}
       <div>
         <h3 className="font-bold text-sm mt-4">Payment</h3>
-        <p className="text-sm mb-1">ရွေးချယ်မှု</p>
+        <p className="text-sm mb-1">ရွေချိန်</p>
+        <div className="flex gap-2 mb-2">
+          <Input
+            placeholder="K"
+            value={payKyat}
+            onChange={(e) => handlePaymentChange("kyat", e.target.value)}
+            className="w-16 bg-gray-100"
+          />
+          <Input
+            placeholder="P"
+            value={payPae}
+            onChange={(e) => handlePaymentChange("pae", e.target.value)}
+            className="w-16 bg-gray-100"
+          />
+          <Input
+            placeholder="Y"
+            value={payYway}
+            onChange={(e) => handlePaymentChange("yway", e.target.value)}
+            className="w-16 bg-gray-100"
+          />
+          <Input
+            placeholder="G"
+            value={payGram}
+            onChange={(e) => handlePaymentChange("gram", e.target.value)}
+            className="w-16 bg-gray-100"
+          />
+        </div>
+        <p className="text-sm mb-1">Cash</p>
+        <Input
+          placeholder="ငွေပမာဏ"
+          value={cash}
+          onChange={(e) => handleCashChange(e.target.value)}
+          className="w-64 bg-gray-100"
+        />
+      </div>
+
+      <div className="flex gap-4 mt-4">
+        <Button
+          variant="outline"
+          className="bg-gray-100 text-gray-700"
+          onClick={() => nav(-1)}
+        >
+          Cancel
+        </Button>
+        <Button
+          onClick={handlePayment}
+          className="bg-yellow-600 hover:bg-yellow-700 text-white"
+        >
+          Add
+        </Button>
+      </div>
+
+      <div>
+        <h3 className="font-bold text-sm mt-4">Discount</h3>
+        <p className="text-sm mb-1">ရွေချိန်</p>
         <div className="flex gap-2 mb-2">
           <Input placeholder="K" className="w-16 bg-gray-100" />
           <Input placeholder="P" className="w-16 bg-gray-100" />

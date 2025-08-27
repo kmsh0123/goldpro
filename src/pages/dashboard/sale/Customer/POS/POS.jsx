@@ -1,17 +1,174 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ChevronLeftIcon } from "lucide-react";
 import POSLeft from "./POS-left";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { useCreateOrderMutation } from "@/feature/api/posApi/posApi";
+import {
+  clearCart,
+  resetGoldWeight,
+  selectCartTotals,
+  updateConvert24K,
+} from "@/feature/service/cartSlice";
 
 const POS = () => {
-  const items = useSelector((state) => state.cart.items) || [];
-  const shweChain = useSelector((state) => state.cart.shweChain) || {
-    kyat: 0,
-    pae: 0,
-    yway: 0,
-    gram: 0,
+  const [createOrder, { isLoading }] = useCreateOrderMutation();
+  const dispatch = useDispatch();
+
+  const { items, goldWeight, alyut, payments, payment, laathk } = useSelector(
+    (state) => state.cart
+  );
+
+  const convert24K = useSelector((state) => state.cart.convert24K);
+  const convert24KDetail = useSelector((state) => state.cart.convert24KDetail);
+
+  const handleConfirmOrder = async () => {
+    if (!items || items.length === 0) {
+      alert("No items in cart!");
+      return;
+    }
+
+    const payload = {
+      orderCode: "ORD-" + Date.now(),
+      voucherCode: items[0]?.voucherCode || "N/A",
+      customerId: items[0]?.customerId || 1,
+      totalQuantity: items.reduce((sum, i) => sum + (Number(i.qty) || 1), 0),
+      totalKyat: Number(goldWeight?.kyat) || 0,
+      totalPae: Number(goldWeight?.pae) || 0,
+      totalYway: Number(goldWeight?.yway) || 0,
+      totalGram: Number(goldWeight?.gram) || 0,
+      totalPrice: items.reduce((sum, i) => sum + Number(i.price || 0), 0),
+      todayRate: Number(items[0]?.todayRate) || 0,
+      paymentKyat: Number(payment?.kyat) || 0,
+      paymentPae: Number(payment?.pae) || 0,
+      paymentYway: Number(payment?.yway) || 0,
+      paymentGram: Number(payment?.gram) || 0,
+      paymentCash: Number(payment?.cash) || 0,
+      discountKyat: 0,
+      discountPae: 0,
+      discountYway: 0,
+      discountGram: 0,
+      discountCash: 0,
+      total24KKyat: Number(convert24KDetail?.kyat) || 0,
+      total24KPae: Number(convert24KDetail?.pae) || 0,
+      total24KYway: Number(convert24KDetail?.yway) || 0,
+      total24KGram: Number(convert24K) || 0,
+      items: items.map((i) => ({
+        productId: i.productId || 0,
+        typeId: i.typeId || 0,
+        qualityId: i.qualityId || 0,
+        categoryId: i.categoryId || 0,
+        quantity: Number(i.qty) || 1,
+        yautKyat: Number(i.alyautKyat) || 0,
+        yautPae: Number(i.alyautPae) || 0,
+        yautYway: Number(i.alyautYway) || 0,
+        yautGram: Number(i.alyautGram) || 0,
+        shweKyat: Number(i.kyat) || 0,
+        shwePae: Number(i.pae) || 0,
+        shweYway: Number(i.yway) || 0,
+        shweGram: Number(i.gram) || 0,
+        paymentKyat: Number(i.paymentKyat) || 0,
+        paymentPae: Number(i.payPae) || 0,
+        paymentYway: Number(i.payYway) || 0,
+        paymentGram: Number(i.payGram) || 0,
+        paymentCash: 0,
+        discountKyat: 0,
+        discountPae: 0,
+        discountYway: 0,
+        discountGram: 0,
+        discountCash: 0,
+        totalKyat: Number(i.kyat) || 0,
+        totalPae: Number(i.pae) || 0,
+        totalYway: Number(i.yway) || 0,
+        totalGram: Number(i.gram) || 0,
+        totalPrice: Number(i.price) || 0,
+        total24KKyat: 0,
+        total24KPae: 0,
+        total24KYway: 0,
+        total24KGram: 0,
+      })),
+    };
+
+    try {
+      const result = await createOrder(payload).unwrap();
+      console.log("Order created successfully:", result);
+      alert("Order created successfully!");
+      dispatch(clearCart());
+    } catch (error) {
+      console.error("Order creation failed:", error);
+      alert("Order failed: " + (error.message || "Unknown error"));
+    }
+  };
+
+  useEffect(() => {
+    dispatch(updateConvert24K());
+  }, [items, dispatch]);
+
+  // Calculate totals for display
+  const calculateItemTotals = (item) => {
+    const qty = Number(item.qty || 1);
+    const alyotKyat = Number(item.alyautKyat || 0);
+    const alyotPae = Number(item.alyautPae || 0);
+    const alyotYway = Number(item.alyautYway || 0);
+    const alyotGram = Number(item.alyautGram || 0);
+
+    const shweKyat = Number(item.kyat || 0);
+    const shwePae = Number(item.pae || 0);
+    const shweYway = Number(item.yway || 0);
+    const shweGram = Number(item.gram || 0);
+
+    // Calculate net weight (shwe - alyot)
+    const netKyat = shweKyat + alyotKyat;
+    const netPae = shwePae + alyotPae;
+    const netYway = shweYway + alyotYway;
+    const netGram = shweGram + alyotGram;
+
+    return {
+      qty,
+      alyotKyat,
+      alyotPae,
+      alyotYway,
+      alyotGram,
+      shweKyat,
+      shwePae,
+      shweYway,
+      shweGram,
+      netKyat,
+      netPae,
+      netYway,
+      netGram,
+    };
+  };
+
+  // Calculate total payments
+  const calculateTotalPayments = () => {
+    if (!payments || payments.length === 0)
+      return { kyat: 0, pae: 0, yway: 0, gram: 0 };
+
+    return payments.reduce(
+      (total, payment) => ({
+        kyat: total.kyat + (Number(payment?.kyat) || 0),
+        pae: total.pae + (Number(payment?.pae) || 0),
+        yway: total.yway + (Number(payment?.yway) || 0),
+        gram: total.gram + (Number(payment?.gram) || 0),
+      }),
+      { kyat: 0, pae: 0, yway: 0, gram: 0 }
+    );
+  };
+
+  // Calculate total cash from all items
+  const calculateTotalCash = () => {
+    if (!items || items.length === 0) return 0;
+
+    const convert24KGram = Number(convert24K) || 0;
+    const totalCash = items.reduce((sum, item) => {
+      const todayRate = Number(item.todayRate || 0);
+      return sum + convert24KGram * todayRate;
+    }, 0);
+
+    // Double the total cash
+    return totalCash * 2;
   };
 
   return (
@@ -34,11 +191,11 @@ const POS = () => {
         <Card className="p-4">
           {/* Invoice Info */}
           <div className="text-sm space-y-1 mb-4">
-            <p>Voucher Code: 12345</p>
-            <p>Customer Name: ABCD</p>
-            <p>Gold Quality: 22K</p>
-            <p>Date: 6/6/2025</p>
-            <p>Time: 11:11 AM</p>
+            <p>Voucher Code: {items[0]?.voucherCode || "N/A"}</p>
+            <p>Customer Name: {items[0]?.customerName || "N/A"}</p>
+            <p>Gold Quality: {items[0]?.qualityName || "N/A"}</p>
+            <p>Date: {new Date().toLocaleDateString()}</p>
+            <p>Time: {new Date().toLocaleTimeString()}</p>
           </div>
 
           {/* Invoice Table */}
@@ -46,13 +203,30 @@ const POS = () => {
             <table className="w-full border border-collapse text-sm text-center">
               <thead>
                 <tr>
-                  <th className="border p-1" rowSpan={2}>No.</th>
-                  <th className="border p-1" rowSpan={2}>Product</th>
-                  <th className="border p-1" rowSpan={2}>Qty</th>
-                  <th className="border p-1" colSpan={4}>အလျော့တွက်</th>
-                  <th className="border p-1" rowSpan={2}>လက်ခ</th>
-                  <th className="border p-1" colSpan={4}>ရွှေချိန်</th>
-                  <th className="border p-1" colSpan={4}>Total</th>
+                  <th className="border p-1" rowSpan={2}>
+                    No.
+                  </th>
+                  <th className="border p-1" rowSpan={2}>
+                    Product
+                  </th>
+                  <th className="border p-1" rowSpan={2}>
+                    Qty
+                  </th>
+                  <th className="border p-1" colSpan={4}>
+                    အလျော့တွက်
+                  </th>
+                  <th className="border p-1" rowSpan={2}>
+                    လက်ခ
+                  </th>
+                  <th className="border p-1" colSpan={4}>
+                    ရွှေချိန်
+                  </th>
+                  <th className="border p-1" colSpan={4}>
+                    Total
+                  </th>
+                  <th className="border p-1" colSpan={3}>
+                    ConvertTo24K
+                  </th>
                 </tr>
                 <tr>
                   <th className="border p-1">ကျပ်</th>
@@ -69,62 +243,94 @@ const POS = () => {
                   <th className="border p-1">ပဲ</th>
                   <th className="border p-1">ရွေး</th>
                   <th className="border p-1">G</th>
+
+                  <th className="border p-1">ကျပ်</th>
+                  <th className="border p-1">ပဲ</th>
+                  <th className="border p-1">ရွေး</th>
                 </tr>
               </thead>
 
               <tbody>
-                {items.length === 0 ? (
+                {items && items.length === 0 ? (
                   <tr>
-                    <td className="border p-1" colSpan={16}>
+                    <td className="border p-1" colSpan={19}>
                       No items added.
                     </td>
                   </tr>
                 ) : (
                   items.map((item, index) => {
-                    const qty = Number(item.qty || 1);
-
-                    const alyotKyat = Number(item.kyat || 0);
-                    const alyotPae = Number(item.pae || 0);
-                    const alyotYway = Number(item.yway || 0);
-                    const alyotGram = Number(item.gram || 0);
-                    const lakha = Number(item.lakha || 0);
-
-                    const shweKyat = Number(shweChain.kyat || 0);
-                    const shwePae = Number(shweChain.pae || 0);
-                    const shweYway = Number(shweChain.yway || 0);
-                    const shweGram = Number(shweChain.gram || 0);
-
-                    const totalKyat = (alyotKyat + shweKyat) * qty;
-                    const totalPae = (alyotPae + shwePae) * qty;
-                    const totalYway = (alyotYway + shweYway) * qty;
-                    const totalGram = (alyotGram + shweGram) * qty;
+                    const totals = calculateItemTotals(item);
+                    const todayRate = Number(item.todayRate || 0);
 
                     return (
                       <tr key={index}>
-                        <td className="border p-1 bg-yellow-100">{index + 1}</td>
-                        <td className="border p-1 bg-yellow-100">{item.name || "Product"}</td>
-                        <td className="border p-1 bg-yellow-100">{qty}</td>
+                        <td className="border p-1 bg-yellow-100">
+                          {index + 1}
+                        </td>
+                        <td className="border p-1 bg-yellow-100">
+                          {item.productName || "N/A"}
+                        </td>
+                        <td className="border p-1 bg-yellow-100">
+                          {totals.qty}
+                        </td>
 
                         {/* အလျော့တွက် */}
-                        <td className="border p-1 bg-yellow-100">{alyotKyat}</td>
-                        <td className="border p-1 bg-yellow-100">{alyotPae}</td>
-                        <td className="border p-1 bg-yellow-100">{alyotYway}</td>
-                        <td className="border p-1 bg-yellow-100">{alyotGram}</td>
+                        <td className="border p-1 bg-yellow-100">
+                          {totals.alyotKyat}
+                        </td>
+                        <td className="border p-1 bg-yellow-100">
+                          {totals.alyotPae}
+                        </td>
+                        <td className="border p-1 bg-yellow-100">
+                          {totals.alyotYway}
+                        </td>
+                        <td className="border p-1 bg-yellow-100">
+                          {totals.alyotGram.toFixed(2)}
+                        </td>
 
                         {/* လက်ခ */}
-                        <td className="border p-1 bg-yellow-100">{lakha}</td>
+                        <td className="border p-1 bg-yellow-100">
+                          {Number(item.laathk) || 0}
+                        </td>
 
                         {/* ရွှေချိန် */}
-                        <td className="border p-1 bg-yellow-100">{shweKyat}</td>
-                        <td className="border p-1 bg-yellow-100">{shwePae}</td>
-                        <td className="border p-1 bg-yellow-100">{shweYway}</td>
-                        <td className="border p-1 bg-yellow-100">{shweGram}</td>
+                        <td className="border p-1 bg-yellow-100">
+                          {totals.shweKyat}
+                        </td>
+                        <td className="border p-1 bg-yellow-100">
+                          {totals.shwePae}
+                        </td>
+                        <td className="border p-1 bg-yellow-100">
+                          {totals.shweYway}
+                        </td>
+                        <td className="border p-1 bg-yellow-100">
+                          {totals.shweGram.toFixed(2)}
+                        </td>
 
-                        {/* Total */}
-                        <td className="border p-1 bg-yellow-100">{totalKyat}</td>
-                        <td className="border p-1 bg-yellow-100">{totalPae}</td>
-                        <td className="border p-1 bg-yellow-100">{totalYway}</td>
-                        <td className="border p-1 bg-yellow-100">{totalGram.toFixed(2)}</td>
+                        {/* Total (Net Weight) */}
+                        <td className="border p-1 bg-yellow-100">
+                          {totals.netKyat}
+                        </td>
+                        <td className="border p-1 bg-yellow-100">
+                          {totals.netPae}
+                        </td>
+                        <td className="border p-1 bg-yellow-100">
+                          {totals.netYway}
+                        </td>
+                        <td className="border p-1 bg-yellow-100">
+                          {totals.netGram.toFixed(2)}
+                        </td>
+
+                        {/* Convert to 24K */}
+                        <td className="border p-1 bg-yellow-100">
+                          {convert24KDetail?.kyat || 0}
+                        </td>
+                        <td className="border p-1 bg-yellow-100">
+                          {convert24KDetail?.pae || 0}
+                        </td>
+                        <td className="border p-1 bg-yellow-100">
+                          {convert24KDetail?.yway || 0}
+                        </td>
                       </tr>
                     );
                   })
@@ -132,52 +338,81 @@ const POS = () => {
               </tbody>
 
               <tfoot>
-                {/* Footer Rows */}
                 <tr>
                   <td className="border p-1"></td>
-                  <td className="border p-1 text-center font-bold">Total</td>
+                  <td className="border p-1 text-center font-bold">
+                    Gold (24K)
+                  </td>
                   <td className="border p-1"></td>
                   <td className="border p-1" colSpan={4}></td>
                   <td className="border p-1"></td>
                   <td className="border p-1" colSpan={4}></td>
                   <td className="border p-1" colSpan={4}></td>
+                  <td className="border p-1" colSpan={3}></td>
                 </tr>
+
                 <tr>
                   <td className="border p-1"></td>
-                  <td className="border p-1 text-center font-bold">Gold (24K)</td>
+                  <td className="border p-1 text-center font-bold">
+                    Previous Balance
+                  </td>
                   <td className="border p-1"></td>
                   <td className="border p-1" colSpan={4}></td>
                   <td className="border p-1"></td>
                   <td className="border p-1" colSpan={4}></td>
                   <td className="border p-1" colSpan={4}></td>
+                  <td className="border p-1" colSpan={3}></td>
                 </tr>
+
+                {/* Combined Payment and Total Cash Row */}
                 <tr>
                   <td className="border p-1"></td>
-                  <td className="border p-1 text-center font-bold">Previous Balance</td>
+                  <td className="border p-1 text-center font-bold">
+                    Payment (22K)
+                  </td>
                   <td className="border p-1"></td>
-                  <td className="border p-1" colSpan={4}></td>
+
+                  {/* Payment 22K Values */}
+                  {payments && payments.length > 0 ? (
+                    <>
+                      <td className="border p-1">
+                        {calculateTotalPayments().kyat}
+                      </td>
+                      <td className="border p-1">
+                        {calculateTotalPayments().pae}
+                      </td>
+                      <td className="border p-1">
+                        {calculateTotalPayments().yway}
+                      </td>
+                      <td className="border p-1">
+                        {calculateTotalPayments().gram.toFixed(2)}
+                      </td>
+                    </>
+                  ) : (
+                    <td className="border p-1" colSpan={4}></td>
+                  )}
+
                   <td className="border p-1"></td>
-                  <td className="border p-1" colSpan={4}></td>
-                  <td className="border p-1" colSpan={4}></td>
+                  <td className="border p-1" colSpan={4}>
+                    san tar
+                  </td>
+
+                  {/* Total Cash Doubled */}
                 </tr>
+
                 <tr>
                   <td className="border p-1"></td>
-                  <td className="border p-1 text-center font-bold">Payment (22K)</td>
-                  <td className="border p-1"></td>
-                  <td className="border p-1" colSpan={4}>san pa pa</td>
-                  <td className="border p-1"></td>
-                  <td className="border p-1" colSpan={4}>san tar</td>
-                  <td className="border p-1" colSpan={4}></td>
+                  <td className="border p-1 text-center font-bold">
+                    Total (Cash) Doubled
+                  </td>
+                  <td className="border p-1" colSpan={17}>
+                    {calculateTotalCash()
+                      ? calculateTotalCash().toLocaleString()
+                      : 0}{" "}
+                    Ks
+                  </td>
                 </tr>
-                <tr>
-                  <td className="border p-1"></td>
-                  <td className="border p-1 text-center font-bold">Payment (Cash)</td>
-                  <td className="border p-1"></td>
-                  <td className="border p-1" colSpan={4}></td>
-                  <td className="border p-1"></td>
-                  <td className="border p-1" colSpan={4}></td>
-                  <td className="border p-1" colSpan={4}></td>
-                </tr>
+
                 <tr>
                   <td className="border p-1"></td>
                   <td className="border p-1 text-center font-bold">Discount</td>
@@ -186,15 +421,17 @@ const POS = () => {
                   <td className="border p-1"></td>
                   <td className="border p-1" colSpan={4}></td>
                   <td className="border p-1" colSpan={4}></td>
+                  <td className="border p-1" colSpan={3}></td>
                 </tr>
                 <tr>
                   <td className="border p-1"></td>
-                  <td className="border p-1 text-center font-bold">Net Balance</td>
+                  <td className="border p-1 text-center font-bold">ရွှေကျန်</td>
                   <td className="border p-1"></td>
                   <td className="border p-1" colSpan={4}></td>
                   <td className="border p-1"></td>
                   <td className="border p-1" colSpan={4}></td>
                   <td className="border p-1" colSpan={4}></td>
+                  <td className="border p-1" colSpan={3}></td>
                 </tr>
               </tfoot>
             </table>
@@ -202,11 +439,19 @@ const POS = () => {
 
           {/* Footer Buttons */}
           <div className="flex justify-end gap-4 mt-6">
-            <Button variant="outline" className="bg-gray-100 text-gray-700">
+            <Button
+              variant="outline"
+              className="bg-gray-100 text-gray-700"
+              onClick={() => window.history.back()}
+            >
               Cancel
             </Button>
-            <Button className="bg-yellow-600 hover:bg-yellow-700 text-white">
-              Print
+            <Button
+              onClick={handleConfirmOrder}
+              disabled={isLoading || !items || items.length === 0}
+              className="bg-yellow-600 hover:bg-yellow-700 text-white"
+            >
+              {isLoading ? "Saving..." : "Save"}
             </Button>
           </div>
         </Card>

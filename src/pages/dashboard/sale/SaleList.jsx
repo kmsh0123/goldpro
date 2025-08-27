@@ -1,19 +1,48 @@
 import React from 'react'
-import { ArrowUpFromDotIcon, ArrowUpFromLineIcon, ChevronLeftIcon, FilePenLineIcon, ImageIcon, Pencil } from "lucide-react";
+import { ArrowUpFromDotIcon, ArrowUpFromLineIcon, ChevronLeftIcon, EyeIcon, FilePenLineIcon, ImageIcon, Pencil, SquarePenIcon, Trash2Icon, Type } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableHeader, TableRow, TableHead, TableCell, TableBody } from "@/components/ui/table";
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import PaginatedTable from '@/components/dashboard/ResuableComponents/PaginatedTable';
+import { useGetOrderQuery } from '@/feature/api/posApi/posApi';
 
-const data = [
-  { id: 1, date: "6/6/2025", name: "Gold", quality : "24K", gram: "10g", price: "$500" },
-  { id: 2, date: "6/6/2025", name: "Silver" ,quality : "24K", gram: "10g", price: "$500"},
-  { id: 3, date: "6/6/2025", name: "Platinum" ,quality : "24K", gram: "10g", price: "$500"},
-  { id: 4, date: "6/6/2025", name: "Diamond" , quality : "24K", gram: "10g", price: "$500"},
-];
+// const data = [
+//   { id: 1, date: "6/6/2025", name: "Gold", quality : "24K", gram: "10g", price: "$500" },
+//   { id: 2, date: "6/6/2025", name: "Silver" ,quality : "24K", gram: "10g", price: "$500"},
+//   { id: 3, date: "6/6/2025", name: "Platinum" ,quality : "24K", gram: "10g", price: "$500"},
+//   { id: 4, date: "6/6/2025", name: "Diamond" , quality : "24K", gram: "10g", price: "$500"},
+// ];
 
 const SaleList = () => {
+  const [searchParams] = useSearchParams();
+    const navigate = useNavigate();
+    
+      // Current page from URL
+      const page = parseInt(searchParams.get("page")) || 1;
+      const limit = 10;
+      const skip = (page - 1) * limit;
+    
+      // Fetch products
+      const { data: GetProducts } = useGetOrderQuery();
+  
+      console.log("GetProducts", GetProducts);
+
+      
+      
+    
+      // Total pages
+      const totalItems = GetProducts?.data?.total || 0;
+      const totalPages = Math.ceil(totalItems / limit);
+    
+      // Change page
+      const handlePageChange = (newPage) => {
+        if (newPage >= 1 && newPage <= totalPages) {
+          navigate(`?page=${newPage}`);
+        }
+      };
+    
   return (
       <div className="space-y-4">
       {/* Top Bar */}
@@ -90,48 +119,53 @@ const SaleList = () => {
 
       {/* Table */}
       {/* <Card className="overflow-hidden p-5"> */}
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>No.</TableHead>
-              <TableHead>Image</TableHead>
-              <TableHead>Product Name</TableHead>
-              <TableHead>Quality</TableHead>
-              <TableHead>Gram</TableHead>
-              <TableHead>Price</TableHead>
-              <TableHead>Sale Date</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {data.map((item, index) => (
-              <TableRow key={item.id}>
-                <TableCell>{index + 1}.</TableCell>
-                <TableCell>
-                {/* Display icon/link based on whether an image exists */}
-                {item.hasImage ? (
-                  // If image exists, you might link to a detail view or lightbox
-                  <Button variant="ghost" size="sm" className="text-blue-500 hover:text-blue-700 p-1">
-                    <ImageIcon size={16} /> {/* Show image icon if image exists */}
-                  </Button>
-                ) : (
-                  // If no image, show a disabled icon or nothing
-                  <span className="text-gray-400">-</span> // Or <ImageIcon size={16} className="text-gray-300 opacity-50" />
-                )}
-              </TableCell>
-                <TableCell>{item.name}</TableCell>
-                <TableCell>{item.quality}</TableCell>
-                <TableCell>{item.gram}</TableCell>
-                <TableCell>{item.price}</TableCell>
-                <TableCell>
-                  {/* <Button variant="ghost" size="icon" className="text-yellow-600 hover:text-yellow-700">
-                    <Pencil size={30} />
-                  </Button> */}
-                  {item.date}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <PaginatedTable
+        columns={["No.", "Voucher Code", "Name", "Quantity","Type", "Quality", "Categories", "Weight","Sale Date", "Actions"]}
+        data={GetProducts?.data || []}
+        page={page}
+        totalPages={totalPages}
+        onPageChange={handlePageChange}
+        renderRow={(item, index) => (
+          <tr key={item.id}>
+            <td>{skip + index + 1}.</td>
+            <td>
+              {item.order_code}
+            </td>
+            <td>{item.type}</td>
+            <td>{item.type}</td>
+            <td>{item.type}</td>
+            <td>{item.type}</td>
+            <td>{item.type}</td>
+            <td>{item.type}</td>
+            <td>{item.type}</td>
+            <td>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-yellow-600 hover:text-yellow-700"
+                onClick={() => navigate(`/coa/coa-edit/${item.id}`)}
+              >
+                <SquarePenIcon size={30} />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-[#EA0000] hover:text-[#EA0000]"
+              >
+                <Trash2Icon size={30} />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-[#00C02A] hover:text-[#00C02A]"
+                onClick={() => navigate(`/coa/coa-detail/${item.id}`)}
+              >
+                <EyeIcon size={30} />
+              </Button>
+            </td>
+          </tr>
+        )}
+      />
       {/* </Card> */}
     </div>
   )

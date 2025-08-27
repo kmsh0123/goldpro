@@ -59,7 +59,7 @@ const Product = () => {
       {/* Table */}
       {/* <Card className="overflow-hidden p-5"> */}
         <PaginatedTable
-        columns={["No.", "Date", "Product Name", "Actions"]}
+        columns={["No.", "Date","Product Code", "Product Name", "Stock", "Weight(g)", "Actions"]}
         data={GetProducts?.data || []}
         page={page}
         totalPages={totalPages}
@@ -72,7 +72,10 @@ const Product = () => {
                 ? new Date(item.created_at).toISOString().split("T")[0]
                 : ""}
             </td>
+            <td>{item.product_code}</td>
             <td>{item.name}</td>
+            <td>{item.stock}</td>
+            <td>{item.alyaut_twat_gram * item.stock}</td>
             <td>
               <Button
                 variant="ghost"

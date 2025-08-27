@@ -5,7 +5,10 @@ import { typeApi } from '../api/inventory/typeApi'
 import { qualityApi } from '../api/inventory/qualityApi'
 import { categoryApi } from '../api/inventory/categoryApi'
 import cartSlice from '../service/cartSlice'
+import paymentSlice from '../service/paymentSlice'
 import { subCoaApi } from '../api/subCoaApi/subCoaApi'
+import { customerApi } from '../api/saleApi/customerApi'
+import { posApi } from '../api/posApi/posApi'
 
 export const store = configureStore({
   reducer: {
@@ -15,7 +18,10 @@ export const store = configureStore({
     [categoryApi.reducerPath]: categoryApi.reducer,
     [coaApi.reducerPath]: coaApi.reducer,
     [subCoaApi.reducerPath]: subCoaApi.reducer,
+    [customerApi.reducerPath]: customerApi.reducer,
+    [posApi.reducerPath]: posApi.reducer,
     cart: cartSlice,
+    payment : paymentSlice,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
@@ -25,5 +31,8 @@ export const store = configureStore({
       qualityApi.middleware,
       categoryApi.middleware,
       subCoaApi.middleware,
+      customerApi.middleware,
+      posApi.middleware,
     ),
-})
+
+  })

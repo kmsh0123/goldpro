@@ -11,7 +11,7 @@ import { useGetCoaQuery } from '@/feature/api/coaApi/coaApi';
 
 const COA = () => {
   const [searchParams] = useSearchParams();
-    const navigate = useNavigate();
+  const navigate = useNavigate();
   
     // Current page from URL
     const page = parseInt(searchParams.get("page")) || 1;

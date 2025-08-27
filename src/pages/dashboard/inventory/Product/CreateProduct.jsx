@@ -28,6 +28,8 @@ import { useNavigate } from "react-router-dom";
 import { useCreateProductMutation } from "@/feature/api/inventory/productApi";
 import { useGetCategoryQuery } from "@/feature/api/inventory/categoryApi";
 import { toast } from "react-toastify";
+import { useGetTypeQuery } from "@/feature/api/inventory/typeApi";
+import { useGetQualityQuery } from "@/feature/api/inventory/qualityApi";
 
 
 const gramToKyatPaeYway = (gram) => {
@@ -57,6 +59,14 @@ const CreateProduct = () => {
   const [openCategory, setOpenCategory] = useState(false);
   const [searchCategory, setSearchCategory] = useState("");
 
+  // Type select state
+    const [openType, setOpenType] = useState(false);
+    const [searchType, setSearchType] = useState("");
+  
+    // Quality select state
+    const [openQuality, setOpenQuality] = useState(false);
+    const [searchQuality, setSearchQuality] = useState("");
+
   const { register, handleSubmit, reset, watch, control, setValue } = useForm({
     defaultValues: {
       categoryId: "",
@@ -77,11 +87,23 @@ const CreateProduct = () => {
   });
 
   const { data: GetCategory } = useGetCategoryQuery();
+  const { data: GetType } = useGetTypeQuery();
+  const { data: GetQuality } = useGetQualityQuery();
 
   const selectedCategoryId = watch("categoryId");
+  const selectedTypeId = watch("typeId");
+  const selectedQualityId = watch("qualityId");
 
   const selectedCategoryName =
     GetCategory?.data?.find((item) => item.id.toString() === selectedCategoryId)
+      ?.name || "";
+
+   const selectedTypeName =
+    GetType?.data?.find((item) => item.id.toString() === selectedTypeId)?.name ||
+    "";
+
+  const selectedQualityName =
+    GetQuality?.data?.find((item) => item.id.toString() === selectedQualityId)
       ?.name || "";
 
   const handleImageChange = (e) => {
@@ -114,6 +136,14 @@ const CreateProduct = () => {
 
   const filteredCategory = GetCategory?.data?.filter((item) =>
     item.name.toLowerCase().includes(searchCategory.toLowerCase())
+  );
+
+    const filteredType = GetType?.data?.filter((item) =>
+    item.name.toLowerCase().includes(searchType.toLowerCase())
+  );
+
+  const filteredQuality = GetQuality?.data?.filter((item) =>
+    item.name.toLowerCase().includes(searchQuality.toLowerCase())
   );
 
   const shweGram = watch("shweGram");
@@ -190,6 +220,154 @@ const CreateProduct = () => {
               className="bg-[#ebebeb] py-5"
             />
           </div>
+          {/* <div className="w-full">
+            <label className="block mb-1 font-medium">Category</label>
+            <Controller
+              name="categoryId"
+              control={control}
+              render={({ field }) => (
+                <Popover open={openCategory} onOpenChange={setOpenCategory}>
+                  <PopoverTrigger asChild>
+                    <div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        role="combobox"
+                        className="w-full justify-between"
+                      >
+                        {selectedCategoryName || "Select Category"}
+                      </Button>
+                    </div>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80 p-0">
+                    <Command>
+                      <CommandInput
+                        placeholder="Search type..."
+                        value={searchCategory}
+                        onValueChange={setSearchCategory}
+                      />
+                      <CommandList className="max-h-40 overflow-y-auto">
+                        <CommandEmpty>No results found.</CommandEmpty>
+                        <CommandGroup>
+                          {filteredCategory?.map((item) => (
+                            <CommandItem
+                              key={item.id}
+                              onSelect={() => {
+                                field.onChange(item.id.toString());
+                                setOpenCategory(false);
+                              }}
+                            >
+                              {item.name}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              )}
+            />
+          </div> */}
+        </div>
+
+         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+         
+         <div className="w-full">
+            <label className="block mb-1 font-medium">Type</label>
+            <Controller
+              name="typeId"
+              control={control}
+              render={({ field }) => (
+                <Popover open={openType} onOpenChange={setOpenType}>
+                  <PopoverTrigger asChild>
+                    <div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        role="combobox"
+                        className="w-full justify-between"
+                      >
+                        {selectedTypeName || "Select Type"}
+                      </Button>
+                    </div>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80 p-0">
+                    <Command>
+                      <CommandInput
+                        placeholder="Search type..."
+                        value={searchType}
+                        onValueChange={setSearchType}
+                      />
+                      <CommandList className="max-h-40 overflow-y-auto">
+                        <CommandEmpty>No results found.</CommandEmpty>
+                        <CommandGroup>
+                          {filteredType?.map((item) => (
+                            <CommandItem
+                              key={item.id}
+                              onSelect={() => {
+                                field.onChange(item.id.toString());
+                                setOpenType(false);
+                              }}
+                            >
+                              {item.name}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              )}
+            />
+          </div>
+          <div className="w-full">
+            <label className="block mb-1 font-medium">Quality</label>
+            <Controller
+              name="qualityId"
+              control={control}
+              render={({ field }) => (
+                <Popover open={openQuality} onOpenChange={setOpenQuality}>
+                  <PopoverTrigger asChild>
+                    <div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        role="combobox"
+                        className="w-full justify-between"
+                      >
+                        {selectedQualityName || "Select Quality"}
+                      </Button>
+                    </div>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80 p-0">
+                    <Command>
+                      <CommandInput
+                        placeholder="Search type..."
+                        value={searchQuality}
+                        onValueChange={setSearchQuality}
+                      />
+                      <CommandList className="max-h-40 overflow-y-auto">
+                        <CommandEmpty>No results found.</CommandEmpty>
+                        <CommandGroup>
+                          {filteredQuality?.map((item) => (
+                            <CommandItem
+                              key={item.id}
+                              onSelect={() => {
+                                field.onChange(item.id.toString());
+                                setOpenQuality(false);
+                              }}
+                            >
+                              {item.name}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              )}
+            />
+          </div>
           <div className="w-full">
             <label className="block mb-1 font-medium">Category</label>
             <Controller
@@ -238,7 +416,9 @@ const CreateProduct = () => {
               )}
             />
           </div>
+          
         </div>
+
 
         {/* Second Row: Image Upload, Name, Description */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
