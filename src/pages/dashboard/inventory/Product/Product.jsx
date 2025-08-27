@@ -3,16 +3,33 @@ import { ChevronLeftIcon, FilePenLineIcon, ImageIcon, Pencil } from "lucide-reac
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableHeader, TableRow, TableHead, TableCell, TableBody } from "@/components/ui/table";
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import PaginatedTable from '@/components/dashboard/ResuableComponents/PaginatedTable';
+import { useGetProductQuery } from '@/feature/api/inventory/productApi';
 
-const data = [
-  { id: 1, date: "6/6/2025", name: "Gold" },
-  { id: 2, date: "6/6/2025", name: "Silver" },
-  { id: 3, date: "6/6/2025", name: "Platinum" },
-  { id: 4, date: "6/6/2025", name: "Diamond" },
-];
 
 const Product = () => {
+ const [searchParams] = useSearchParams();
+   const navigate = useNavigate();
+ 
+   // Current page from URL
+   const page = parseInt(searchParams.get("page")) || 1;
+   const limit = 10;
+   const skip = (page - 1) * limit;
+ 
+   // Fetch products
+   const { data: GetProducts } = useGetProductQuery();
+ 
+   // Total pages
+   const totalItems = GetProducts?.total || 0;
+   const totalPages = Math.ceil(totalItems / limit);
+ 
+   // Change page
+   const handlePageChange = (newPage) => {
+     if (newPage >= 1 && newPage <= totalPages) {
+       navigate(`?page=${newPage}`);
+     }
+   };
   return (
       <div className="space-y-4">
       {/* Top Bar */}
@@ -41,43 +58,33 @@ const Product = () => {
 
       {/* Table */}
       {/* <Card className="overflow-hidden p-5"> */}
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>No.</TableHead>
-              <TableHead>Product Image</TableHead> {/* New Column Header */}
-              <TableHead>Created Date</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Edit</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {data.map((item, index) => (
-              <TableRow key={item.id}>
-                <TableCell>{index + 1}.</TableCell>
-                <TableCell>
-                {/* Display icon/link based on whether an image exists */}
-                {item.hasImage ? (
-                  // If image exists, you might link to a detail view or lightbox
-                  <Button variant="ghost" size="sm" className="text-blue-500 hover:text-blue-700 p-1">
-                    <ImageIcon size={16} /> {/* Show image icon if image exists */}
-                  </Button>
-                ) : (
-                  // If no image, show a disabled icon or nothing
-                  <span className="text-gray-400">-</span> // Or <ImageIcon size={16} className="text-gray-300 opacity-50" />
-                )}
-              </TableCell>
-                <TableCell>{item.date}</TableCell>
-                <TableCell>{item.name}</TableCell>
-                <TableCell>
-                  <Button variant="ghost" size="icon" className="text-yellow-600 hover:text-yellow-700">
-                    <Pencil size={30} />
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <PaginatedTable
+        columns={["No.", "Date", "Product Name", "Actions"]}
+        data={GetProducts?.data || []}
+        page={page}
+        totalPages={totalPages}
+        onPageChange={handlePageChange}
+        renderRow={(item, index) => (
+          <tr key={item.id}>
+            <td>{skip + index + 1}.</td>
+            <td>
+              {item.created_at
+                ? new Date(item.created_at).toISOString().split("T")[0]
+                : ""}
+            </td>
+            <td>{item.name}</td>
+            <td>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-yellow-600 hover:text-yellow-700"
+              >
+                <Pencil size={30} />
+              </Button>
+            </td>
+          </tr>
+        )}
+      />
       {/* </Card> */}
     </div>
   )
