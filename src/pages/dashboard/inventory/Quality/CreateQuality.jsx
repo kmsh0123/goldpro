@@ -92,25 +92,6 @@ const CreateQuality = () => {
         {/* Type Select */}
         <div>
           <label className="block mb-1 font-medium">Type</label>
-          {/* <Controller
-            name="typeId"
-            control={control}
-            render={({ field }) => (
-              <Select onValueChange={field.onChange} value={field.value}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {GetProducts?.data?.map((item) => (
-                    <SelectItem key={item.id} value={item.id.toString()}>
-                      {item.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          /> */}
-
           <Controller
             name="typeId"
             control={control}
