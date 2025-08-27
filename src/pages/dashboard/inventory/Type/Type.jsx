@@ -2,45 +2,36 @@ import React from "react";
 import {
   ChevronLeftIcon,
   EyeIcon,
-  FilePenLineIcon,
-  Pencil,
   SquarePenIcon,
   Trash2Icon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableHeader,
-  TableRow,
-  TableHead,
-  TableCell,
-  TableBody,
-} from "@/components/ui/table";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import PaginatedTable from "@/components/dashboard/ResuableComponents/PaginatedTable";
-import { useGetTypeQuery } from "@/feature/api/inventory/typeApi";
+import {
+  useGetTypeQuery,
+  useDeleteTypeMutation,
+} from "@/feature/api/inventory/typeApi";
+import Swal from "sweetalert2";
+import withReactContent from "sweetalert2-react-content";
 
-// const data = [
-//   { id: 1, date: "6/6/2025", name: "Gold" },
-//   { id: 2, date: "6/6/2025", name: "Silver" },
-//   { id: 3, date: "6/6/2025", name: "Platinum" },
-//   { id: 4, date: "6/6/2025", name: "Diamond" },
-// ];
+const MySwal = withReactContent(Swal);
 
 const Type = () => {
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
+  const nav = useNavigate();
+
+  // RTK mutations
+  const [deleteType] = useDeleteTypeMutation();
 
   // Current page from URL
   const page = parseInt(searchParams.get("page")) || 1;
   const limit = 10;
   const skip = (page - 1) * limit;
 
-  // Fetch products
+  // Fetch types
   const { data: GetProducts } = useGetTypeQuery({ limit, skip });
-
-  console.log("GetProducts", GetProducts);
 
   // Total pages
   const totalItems = GetProducts?.data?.total || 0;
@@ -49,9 +40,32 @@ const Type = () => {
   // Change page
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= totalPages) {
-      navigate(`?page=${newPage}`);
+      nav(`?page=${newPage}`);
     }
   };
+
+  // Handle delete with SweetAlert2
+  const handleDelete = (id) => {
+    MySwal.fire({
+      title: "Are you sure?",
+      text: "This action cannot be undone!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, delete it!",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await deleteType(id).unwrap();
+          MySwal.fire("Deleted!", "Type has been deleted.", "success");
+        } catch (error) {
+          MySwal.fire("Error!", "Failed to delete type.", "error");
+        }
+      }
+    });
+  };
+
   return (
     <div className="space-y-4">
       {/* Top Bar */}
@@ -77,7 +91,6 @@ const Type = () => {
       <div className="border-b-2"></div>
 
       {/* Table */}
-      {/* <Card className="overflow-hidden p-5"> */}
       <PaginatedTable
         columns={["No.", "Created Date", "Name", "Actions"]}
         data={GetProducts?.data || []}
@@ -87,14 +100,14 @@ const Type = () => {
         renderRow={(item, index) => (
           <tr key={item.id}>
             <td>{skip + index + 1}.</td>
-            <td>{(item.created_at)?.split("T")[0]}</td>
+            <td>{item.created_at?.split("T")[0]}</td>
             <td>{item.name}</td>
             <td>
               <Button
                 variant="ghost"
                 size="icon"
                 className="text-yellow-600 hover:text-yellow-700"
-                onClick={() => navigate(`/coa/coa-edit/${item.id}`)}
+                onClick={() => nav(`/inventory/type/update/${item.id}`)}
               >
                 <SquarePenIcon size={30} />
               </Button>
@@ -102,22 +115,22 @@ const Type = () => {
                 variant="ghost"
                 size="icon"
                 className="text-[#EA0000] hover:text-[#EA0000]"
+                onClick={() => handleDelete(item.id)}
               >
                 <Trash2Icon size={30} />
               </Button>
-              <Button
+              {/* <Button
                 variant="ghost"
                 size="icon"
                 className="text-[#00C02A] hover:text-[#00C02A]"
-                onClick={() => navigate(`/coa/coa-detail/${item.id}`)}
+                onClick={() => nav(`/inventory/type/${item.id}`)}
               >
                 <EyeIcon size={30} />
-              </Button>
+              </Button> */}
             </td>
           </tr>
         )}
       />
-      {/* </Card> */}
     </div>
   );
 };

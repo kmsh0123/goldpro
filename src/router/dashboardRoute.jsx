@@ -30,6 +30,10 @@ import CreateCOA from "@/pages/dashboard/coa/CreateCOA.jsx";
 import COADetail from "@/pages/dashboard/coa/coa_detail/COA-detail.jsx";
 import CreateCOADetail from "@/pages/dashboard/coa/coa_detail/CreateCOA-detail.jsx";
 import EditCOA from "@/pages/dashboard/coa/EditCOA.jsx";
+import UpdateType from "@/pages/dashboard/inventory/Type/UpdateType.jsx";
+import UpdateQuality from "@/pages/dashboard/inventory/Quality/UpdateQuality.jsx";
+import UpdateCategory from "@/pages/dashboard/inventory/Category/UpdateCategory.jsx";
+import path from "path";
 
 const dashboardRoute = [
   {
@@ -55,6 +59,10 @@ const dashboardRoute = [
         element: <CreateType/>,
       },
       {
+        path: "/inventory/type/update/:id",
+        element: <UpdateType/>,
+      },
+      {
         path: "/inventory/quality",
         element: <Quality />,
       },
@@ -63,12 +71,20 @@ const dashboardRoute = [
         element: <CreateQuality/>,
       },
       {
+        path: "/inventory/quality/update/:id",
+        element: <UpdateQuality/>,
+      },
+      {
         path: "/inventory/category",
         element: <Category />,
       },
       {
         path: "/inventory/category/create",
         element: <CreateCategory/>,
+      },
+      {
+        path: "/inventory/category/update/:id",
+        element: <UpdateCategory/>,
       },
       {
         path: "/inventory/product",

@@ -23,6 +23,22 @@ export const categoryApi = createApi({
       }),
       invalidatesTags: ["categoryApi"],
     }),
+    UpdateCategory: builder.mutation({
+      query: ({id,formData}) => ({
+        url: `category/update/${id}`,
+        method: "PUT",
+        body: formData,
+      }),
+      invalidatesTags: ["categoryApi"],
+    }),
+
+    deleteCategory: builder.mutation({
+      query: (id) => ({
+        url: `category/delete/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["categoryApi"],
+    }),
     // logout: builder.mutation({
     //   query: (token) => ({
     //     url: "/user-logout",
@@ -34,4 +50,4 @@ export const categoryApi = createApi({
   }),
 });
 
-export const {useGetCategoryQuery,useCreateCategoryMutation} = categoryApi;
+export const {useGetCategoryQuery,useCreateCategoryMutation,useUpdateCategoryMutation} = categoryApi;

@@ -1,3 +1,4 @@
+import UpdateQuality from "@/pages/dashboard/inventory/Quality/UpdateQuality";
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
 export const qualityApi = createApi({
@@ -23,6 +24,22 @@ export const qualityApi = createApi({
       }),
       invalidatesTags: ["qualityApi"],
     }),
+    UpdateQuality: builder.mutation({
+      query: ({id,formData}) => ({
+        url: `quality/update/${id}`,
+        method: "PUT",
+        body: formData,
+      }),
+      invalidatesTags: ["qualityApi"],
+    }),
+
+    deleteQuality: builder.mutation({
+      query: (id) => ({
+        url: `quality/delete/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["qualityApi"],
+    }),
     // logout: builder.mutation({
     //   query: (token) => ({
     //     url: "/user-logout",
@@ -34,4 +51,9 @@ export const qualityApi = createApi({
   }),
 });
 
-export const {useGetQualityQuery,useCreateQualityMutation} = qualityApi;
+export const {
+  useGetQualityQuery,
+  useCreateQualityMutation,
+  useUpdateQualityMutation,
+  useDeleteQualityMutation
+} = qualityApi;

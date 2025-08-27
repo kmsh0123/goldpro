@@ -74,18 +74,22 @@ const Category = () => {
             <td>{item.code}</td>
             <td>{item.name}</td>
             <td>
+              {/* Edit */}
               <Button
                 variant="ghost"
                 size="icon"
                 className="text-yellow-600 hover:text-yellow-700"
-                onClick={() => navigate(`/coa/coa-edit/${item.id}`)}
+                onClick={() => navigate(`/inventory/category/update/${item.id}`)}
               >
                 <SquarePenIcon size={30} />
               </Button>
+
+              {/* Delete */}
               <Button
                 variant="ghost"
                 size="icon"
                 className="text-[#EA0000] hover:text-[#EA0000]"
+                onClick={() => handleDelete(item.id)}
               >
                 <Trash2Icon size={30} />
               </Button>
@@ -106,4 +110,4 @@ const Category = () => {
   )
 }
 
-export default Category
+export default Category;

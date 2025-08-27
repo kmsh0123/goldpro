@@ -23,10 +23,10 @@ export const coaApi = createApi({
       }),
       providesTags: ["coaApi"],
     }),
-    EditCoa: builder.mutation({
+    editCoa: builder.mutation({
       query: (formData) => ({
-        url: `chart_of_accounts/edit`,
-        method: "POST",
+        url: `chart_of_accounts/update/${id}`,
+        method: "PUT",
         body : formData,
       }),
       invalidatesTags: ["coaApi"],
@@ -43,4 +43,4 @@ export const coaApi = createApi({
 });
 
 
-export const {useCreateCoaMutation,useGetCoaQuery} = coaApi;
+export const {useCreateCoaMutation,useGetCoaQuery,useEditCoaMutation} = coaApi;
