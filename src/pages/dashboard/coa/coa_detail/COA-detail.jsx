@@ -3,7 +3,7 @@ import { ChevronLeftIcon, EyeIcon, FilePenLineIcon, Pencil, SquarePen, SquarePen
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableHeader, TableRow, TableHead, TableCell, TableBody } from "@/components/ui/table";
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import PaginatedTable from '@/components/dashboard/ResuableComponents/PaginatedTable';
 import { useGetProductQuery } from '@/feature/api/inventory/productApi';
 import { useGetSubCoaQuery } from '@/feature/api/subCoaApi/subCoaApi';
@@ -12,6 +12,7 @@ import { useGetSubCoaQuery } from '@/feature/api/subCoaApi/subCoaApi';
 const COADetail = () => {
   const [searchParams] = useSearchParams();
     const navigate = useNavigate();
+    const {id} = useParams();
   
     // Current page from URL
     const page = parseInt(searchParams.get("page")) || 1;
@@ -32,8 +33,9 @@ const COADetail = () => {
       }
     };
 
-    const {data : GetSubCoa} = useGetSubCoaQuery();
+    const {data : GetSubCoa} = useGetSubCoaQuery(id);
 
+    console.log("GetSubCoa", GetSubCoa);
     
   
   

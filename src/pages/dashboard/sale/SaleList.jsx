@@ -120,7 +120,8 @@ const SaleList = () => {
       {/* Table */}
       {/* <Card className="overflow-hidden p-5"> */}
         <PaginatedTable
-        columns={["No.", "Voucher Code", "Name", "Quantity","Type", "Quality", "Categories", "Weight","Sale Date", "Actions"]}
+        // columns={["No.", "Voucher Code", "Name", "Quantity","Type", "Quality", "Categories", "Weight","Sale Date", "Actions"]}
+        columns={["No.","Customer", "Voucher Code", "Quantity","Sale Date", "Actions"]}
         data={GetProducts?.data || []}
         page={page}
         totalPages={totalPages}
@@ -128,16 +129,20 @@ const SaleList = () => {
         renderRow={(item, index) => (
           <tr key={item.id}>
             <td>{skip + index + 1}.</td>
+             <td>
+              {item.customer}
+            </td>
             <td>
               {item.order_code}
             </td>
+            <td>{item.total_quantity}</td>
+            {/* <td>{item.created_at}</td> */}
+            <td>{new Date(item.created_at).toLocaleString()}</td>
+            {/* <td>{item.type}</td>
             <td>{item.type}</td>
             <td>{item.type}</td>
             <td>{item.type}</td>
-            <td>{item.type}</td>
-            <td>{item.type}</td>
-            <td>{item.type}</td>
-            <td>{item.type}</td>
+            <td>{item.type}</td> */}
             <td>
               <Button
                 variant="ghost"

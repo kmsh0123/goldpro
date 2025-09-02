@@ -23,15 +23,23 @@ export const productApi = createApi({
       }),
       invalidatesTags: ["productApi"],
     }),
-    // logout: builder.mutation({
-    //   query: (token) => ({
-    //     url: "/user-logout",
-    //     method: "POST",
-    //     headers: {productApiorization : `Bearer ${token}`}
-    //   }),
-    //   invalidatesTags: ["productApi"],
-    // }),
+    deleteProduct: builder.mutation({
+      query: (id) => ({
+        url: `product/delete/${id}`,
+        method: "POST",
+        // headers: {productApiorization : `Bearer ${token}`}
+      }),
+      invalidatesTags: ["productApi"],
+    }),
+     ProductDetail: builder.query({
+      query: (id) => ({
+        url: `product/details/${id}`,
+        method: "GET",
+        // headers: {productApiorization : `Bearer ${token}`}
+      }),
+      providesTags: ["productApi"],
+    }),
   }),
 });
 
-export const {useGetProductQuery,useCreateProductMutation} = productApi;
+export const {useGetProductQuery,useCreateProductMutation,useDeleteProductMutation,useProductDetailQuery} = productApi;

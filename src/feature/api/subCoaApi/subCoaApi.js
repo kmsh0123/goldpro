@@ -17,8 +17,8 @@ export const subCoaApi = createApi({
       invalidatesTags: ["subCoaApi"],
     }),
     getSubCoa: builder.query({
-      query: () => ({
-        url: "sub_coas/list",
+      query: (id) => ({
+        url: `sub_coas/list/${id}`,
         method: "GET",
       }),
       providesTags: ["subCoaApi"],

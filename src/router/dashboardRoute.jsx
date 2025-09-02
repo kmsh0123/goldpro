@@ -11,7 +11,7 @@ import POS from "@/pages/dashboard/sale/Customer/POS/POS.jsx";
 import SaleList from "@/pages/dashboard/sale/SaleList.jsx";
 import SaleReport from "@/pages/dashboard/sale/SaleReport.jsx";
 import CustomerList from "@/pages/dashboard/sale/Customer/CustomerList.jsx";
-import PurchaseSystem from "@/pages/dashboard/purchase/PurchaseSystem.jsx";
+import PurchaseSystem from "@/pages/dashboard/purchase/POS/PurchaseSystem.jsx";
 import PurchaseList from "@/pages/dashboard/purchase/PurchaseList.jsx";
 import PurchaseReport from "@/pages/dashboard/purchase/PurchaseReport.jsx";
 import DailyPurchaseReport  from "@/pages/dashboard/reports/DailyPurchaseReport.jsx";
@@ -34,6 +34,7 @@ import UpdateType from "@/pages/dashboard/inventory/Type/UpdateType.jsx";
 import UpdateQuality from "@/pages/dashboard/inventory/Quality/UpdateQuality.jsx";
 import UpdateCategory from "@/pages/dashboard/inventory/Category/UpdateCategory.jsx";
 import path from "path";
+import ProductDetailPage from "@/pages/dashboard/inventory/Product/ProductDetail.jsx";
 
 const dashboardRoute = [
   {
@@ -94,6 +95,10 @@ const dashboardRoute = [
         path: "/inventory/product/create",
         element: <CreateProduct/>,
       },
+      {
+        path: "/inventory/product/detail/:id",
+        element: <ProductDetailPage/>,
+      },
       // Inventory
 
       // SaleList
@@ -126,6 +131,10 @@ const dashboardRoute = [
       },
       {
         path: "/purchase/supplier-list",
+        element: <SupplierList />,
+      },
+      {
+        path: "/purchase/supplier-list/create",
         element: <SupplierList />,
       },
       // PurchaseList

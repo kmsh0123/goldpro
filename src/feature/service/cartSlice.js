@@ -19,12 +19,20 @@ const initialState = {
     yway: "",
     gram: "",
   },
+  discount: {
+    kyat: "",
+    pae: "",
+    yway: "",
+    gram: "",
+  },
   laathk: "",
   cash: "",
+  discountcash : "",
   convert24K: 0,
-  convert24KDetail: { kyat: 0, pae: 0, yway: 0 },
+  convert24KDetail: { kyat: 0, pae: 0, yway: 0, gram: 0 },
   items: [],
   payments: [],
+  discountPayments: [],
 };
 
 // Helper Functions
@@ -39,9 +47,10 @@ const convertToKyat = (kyat, pae, yway) => {
 
 const to24K = (kyatValue, quality) => {
   let result = kyatValue;
-  if (quality === 18) result = (kyatValue / 16) * 12;
-  else if (quality === 22) result = (kyatValue / 17.5) * 16;
-  else if (quality === 23) result = (kyatValue / 17) * 16;
+  if (quality === 18) result = (kyatValue * 16) / 12;
+  else if (quality === 22) result = (kyatValue * 17.5) / 16;
+  else if (quality === 23) result = (kyatValue * 17) / 16;
+  else if (quality === 24) result = kyatValue * 1;
 
   console.log(
     `[to24K] kyatValue: ${kyatValue}, quality: ${quality} => converted24K: ${result}`
@@ -53,12 +62,13 @@ const convert24KToKPY = (kyatValue) => {
   const kyat = Math.floor(kyatValue);
   const paeValue = (kyatValue - kyat) * 16;
   const pae = Math.floor(paeValue);
-  const yway = Math.round((paeValue - pae) * 8);
+  const yway = Math.floor((paeValue - pae) * 8);
+  const gram = (kyatValue * 16.67).toFixed(2); // 1 kyat = 16.67 grams (more precise)
 
   console.log(
-    `[convert24KToKPY] kyatValue: ${kyatValue} => kyat: ${kyat}, pae: ${pae}, yway: ${yway}`
+    `[convert24KToKPY] kyatValue: ${kyatValue} => kyat: ${kyat}, pae: ${pae}, yway: ${yway}, gram: ${gram}`
   );
-  return { kyat, pae, yway };
+  return { kyat, pae, yway, gram: parseFloat(gram) }; // Parse gram back to number
 };
 
 export const cartSlice = createSlice({
@@ -66,40 +76,35 @@ export const cartSlice = createSlice({
   initialState,
   reducers: {
     addToCart: (state, action) => {
-      // Add unique ID if not present
       const itemToAdd = {
-        id: Date.now(), // Add unique ID
-        ...action.payload
+        id: Date.now(),
+        ...action.payload,
       };
-      
-      const existingItem = state.items.find(
-        (item) => item.productId === itemToAdd.productId
-      );
-      
-      if (existingItem) {
-        // If item exists, update quantity
-        existingItem.qty = Number(existingItem.qty || 0) + Number(itemToAdd.qty || 1);
-      } else {
-        // If new item, add to cart
-        state.items.push(itemToAdd);
-      }
+      state.items.push(itemToAdd);
+    },
+
+     removeCart: (state, action) => {
+      state.items.splice(action.payload, 1)
+    },
+
+    // (optional) remove by id
+    removeCartById: (state, action) => {
+      state.items = state.items.filter(item => item.id !== action.payload)
     },
 
     removeFromCart: (state, action) => {
-      const itemId = action.payload; // This should be productId or item id
-      const existingItem = state.items.find((item) => item.productId === itemId);
+      const itemId = action.payload;
+      const existingItem = state.items.find((item) => item.id === itemId);
 
       if (existingItem) {
         existingItem.qty = Number(existingItem.qty || 0) - 1;
 
-        // Update stock if it exists
         if (existingItem.stock !== undefined) {
           existingItem.stock = Number(existingItem.stock || 0) + 1;
         }
 
-        // Remove item if quantity reaches 0
         if (existingItem.qty <= 0) {
-          state.items = state.items.filter((item) => item.productId !== itemId);
+          state.items = state.items.filter((item) => item.id !== itemId);
         }
       }
     },
@@ -117,14 +122,42 @@ export const cartSlice = createSlice({
       console.log(state.payment);
     },
     
+    
+    setDiscount: (state, action) => {
+      state.discount = { ...state.discount, ...action.payload };
+      console.log(state.discount);
+    },
+
+    // Add discount payment actions
+    addDiscountPayment: (state, action) => {
+      state.discountPayments.push({ ...action.payload, id: Date.now() });
+    },
+
+    removeDiscountPayment: (state, action) => {
+      state.discountPayments = state.discountPayments.filter(
+        (payment) => payment.id !== action.payload
+      );
+    },
+    
+    // updateDiscountPayment: (state, action) => {
+    //   const { id, ...updates } = action.payload;
+    //   const payment = state.discountPayments.find((p) => p.id === id);
+    //   if (payment) {
+    //     Object.assign(payment, updates);
+    //   }
+    // },
+    
+    resetDiscountPayments: (state) => {
+      state.discountPayments = [];
+    },
+    
+    
     addPayment: (state, action) => {
       state.payments.push({ ...action.payload });
     },
 
     removePayment: (state, action) => {
-      state.payments = state.payments.filter(
-        (_, idx) => idx !== action.payload
-      );
+     state.items.splice(action.payload, 1)
     },
     
     resetPayments: (state) => {
@@ -133,6 +166,10 @@ export const cartSlice = createSlice({
     
     setCash: (state, action) => {
       state.cash = action.payload;
+    },
+
+    setDiscountCash: (state, action) => {
+      state.discountcash = action.payload;
     },
     
     setGoldLaathk: (state, action) => {
@@ -150,15 +187,19 @@ export const cartSlice = createSlice({
       state.payment = { kyat: "", pae: "", yway: "", gram: "" };
     },
     
+    resetDiscount: (state) => {
+      state.discount = { kyat: "", pae: "", yway: "", gram: "" };
+    },
+    
     clearCart: (state) => {
       state.items = [];
       state.goldWeight = { kyat: "", pae: "", yway: "", gram: "" };
-      // Removed undefined shweChain reference
       state.payment = { kyat: "", pae: "", yway: "", gram: "" };
+      state.discount = { kyat: "", pae: "", yway: "", gram: "" };
       state.laathk = "";
       state.cash = "";
       state.convert24K = 0;
-      state.convert24KDetail = { kyat: 0, pae: 0, yway: 0 };
+      state.convert24KDetail = { kyat: 0, pae: 0, yway: 0, gram: 0 };
       state.payments = [];
       console.log("[clearCart] cart cleared");
     },
@@ -177,7 +218,7 @@ export const cartSlice = createSlice({
         state.convert24KDetail = convert24KToKPY(total24K);
       } else {
         state.convert24K = 0;
-        state.convert24KDetail = { kyat: 0, pae: 0, yway: 0 };
+        state.convert24KDetail = { kyat: 0, pae: 0, yway: 0, gram: 0 };
       }
     },
   },
@@ -191,15 +232,24 @@ export const {
   setAlyut,
   setGoldLaathk,
   setCash,
+  setDiscountCash,
   setpayment,
+  setDiscount,
   clearCart,
   resetGoldWeight,
   resetpayment,
+  resetDiscount,
+  addDiscountPayment,
+  removeDiscountPayment,
+  resetDiscountPayments,
+  // updateDiscountPayment,
   addPayment,
   removePayment,
   resetPayments,
   resetAlyutWeight,
   updateConvert24K,
+  removeCart,
+  removeCartById,
 } = cartSlice.actions;
 
 export default cartSlice.reducer;

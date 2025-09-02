@@ -19,7 +19,7 @@ const COA = () => {
     const skip = (page - 1) * limit;
   
     // Fetch products
-    const { data: GetProducts } = useGetCoaQuery({ limit, skip });
+    const { data: GetProducts } = useGetCoaQuery();
 
     console.log("GetProducts", GetProducts);
     

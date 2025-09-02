@@ -6,6 +6,7 @@ import { Table, TableHeader, TableRow, TableHead, TableCell, TableBody } from "@
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useGetCategoryQuery } from '@/feature/api/inventory/categoryApi';
 import PaginatedTable from '@/components/dashboard/ResuableComponents/PaginatedTable';
+import Swal from 'sweetalert2';
 
 
 const Category = () => {
@@ -32,6 +33,40 @@ const Category = () => {
         navigate(`?page=${newPage}`);
       }
     };
+
+    const handleDelete = async (id) => {
+        Swal.fire({
+          title: "Are you sure?",
+          text: "You won’t be able to revert this!",
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonColor: "#d33",
+          cancelButtonColor: "#6c757d",
+          confirmButtonText: "Yes, delete it!",
+        }).then(async (result) => {
+          if (result.isConfirmed) {
+            try {
+              await deleteQuality(id).unwrap();
+              refetch();
+    
+              Swal.fire({
+                title: "Deleted!",
+                text: "Quality has been deleted.",
+                icon: "success",
+                timer: 1500,
+                showConfirmButton: false,
+              });
+            } catch (error) {
+              Swal.fire({
+                title: "Error!",
+                text: "Failed to delete quality.",
+                icon: "error",
+              });
+              console.error("Failed to delete quality:", error);
+            }
+          }
+        });
+      };
 
   return (
       <div className="space-y-4">

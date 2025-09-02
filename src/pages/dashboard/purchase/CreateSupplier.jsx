@@ -34,7 +34,7 @@ const gramToKPY = (gramValue) => {
   return { kyat, pae, yway };
 };
 
-const CreateCustomer = () => {
+const CreateSupplier = () => {
   const [coaCustomer] = useCreateCustomerMutation();
   const nav = useNavigate();
   const [remainingGold, setRemainingGold] = useState({
@@ -274,4 +274,4 @@ const CreateCustomer = () => {
   );
 };
 
-export default CreateCustomer;
+export default CreateSupplier;
