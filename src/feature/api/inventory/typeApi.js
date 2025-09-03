@@ -10,14 +10,14 @@ export const typeApi = createApi({
   endpoints: (builder) => ({
     getType: builder.query({
       query: () => ({
-        url: `type/list`,
+        url: `api/type/list`,
         method: "GET",
       }),
       providesTags: ["typeApi"],
     }),
     createType: builder.mutation({
       query: (formData) => ({
-        url: "type/create",
+        url: "api/type/create",
         method: "POST",
         body: formData,
       }),
@@ -25,7 +25,7 @@ export const typeApi = createApi({
     }),
     updateType: builder.mutation({
       query: ({id,formData}) => ({
-        url: `type/update/${id}`,
+        url: `api/type/update/${id}`,
         method: "PUT",
         body: formData,
       }),
@@ -34,7 +34,7 @@ export const typeApi = createApi({
 
     deleteType: builder.mutation({
       query: (id) => ({
-        url: `type/delete/${id}`,
+        url: `api/type/delete/${id}`,
         method: "DELETE",
       }),
       invalidatesTags: ["typeApi"],
