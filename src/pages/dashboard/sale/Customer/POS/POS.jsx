@@ -872,6 +872,7 @@ const POS = () => {
                         <td className="border p-1 bg-yellow-100">
                           {totals.convert24KDetail?.gram?.toFixed(2) || 0}
                         </td>
+                        {/* San Kyi Thar */}
 
                         {/* //Delete Button */}
                         <Button
