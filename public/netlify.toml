@@ -1,14 +1,5 @@
-# Netlify configuration file
-# Place this in the root of your project (same level as package.json)
-
-[build]
-command = "npm run build"
-publish = "dist"   # if you’re using Vite; for CRA it would be "build"
-
-# Proxy API requests in production
 [[redirects]]
 from = "/api/*"
 to = "http://188.166.205.101:9002/api/:splat"
 status = 200
 force = true
-/*    /index.html   200
