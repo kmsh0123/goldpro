@@ -163,7 +163,7 @@ const SaleList = () => {
                 variant="ghost"
                 size="icon"
                 className="text-[#00C02A] hover:text-[#00C02A]"
-                onClick={() => navigate(`/coa/coa-detail/${item.id}`)}
+                onClick={() => navigate(`/sale/sale-list/detail/${item.id}`)}
               >
                 <EyeIcon size={30} />
               </Button>

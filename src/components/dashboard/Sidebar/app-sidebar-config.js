@@ -43,10 +43,14 @@ const SidebarConfig = [
             title: "Sale List",
             url: "/sale/sale-list",
         },
-        {
-            title: "Sale Report",
-            url: "/sale/sale-report",
-        },
+        // {
+        //     title: "Sale Report",
+        //     url: "/sale/sale-report",
+        // }, 
+        // {
+        //     title: "Sale Detail List",
+        //     url: "/sale/sale-detail/",
+        // },
         {
             title: "Customer List",
             url: "/sale/customer-list",
@@ -66,10 +70,10 @@ const SidebarConfig = [
             title: "Purchase List",
             url: "/purchase/purchase-list",
         },
-        {
-            title: "Purchase Report",
-            url: "/purchase/purchase-report",
-        },
+        // {
+        //     title: "Purchase Report",
+        //     url: "/purchase/purchase-report",
+        // },
         {
             title: "Supplier List",
             url: "/purchase/supplier-list",

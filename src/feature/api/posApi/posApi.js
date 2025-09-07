@@ -15,6 +15,13 @@ export const posApi = createApi({
       }),
       providesTags: ["posApi"],
     }),
+     getOrderListDetail: builder.query({
+      query: (id) => ({
+        url: `/order/orderItemList/${id}`,
+        method: "GET",
+      }),
+      providesTags: ["posApi"],
+    }),
     createOrder: builder.mutation({
       query: (formData) => ({
         url: "order/create",
@@ -34,4 +41,4 @@ export const posApi = createApi({
   }),
 });
 
-export const {useCreateOrderMutation,useGetOrderQuery} = posApi;
+export const {useCreateOrderMutation,useGetOrderQuery,useGetOrderListDetailQuery} = posApi;

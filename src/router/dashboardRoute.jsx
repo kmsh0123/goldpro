@@ -35,6 +35,7 @@ import UpdateQuality from "@/pages/dashboard/inventory/Quality/UpdateQuality.jsx
 import UpdateCategory from "@/pages/dashboard/inventory/Category/UpdateCategory.jsx";
 import path from "path";
 import ProductDetailPage from "@/pages/dashboard/inventory/Product/ProductDetail.jsx";
+import SaleListDetail from "@/pages/dashboard/sale/Customer/SaleListDetail.jsx";
 
 const dashboardRoute = [
   {
@@ -106,9 +107,13 @@ const dashboardRoute = [
         path: "/sale/sale-list",
         element: <SaleList />,
       },
+      // {
+      //   path: "/sale/sale-report",
+      //   element: <SaleReport />,
+      // },
       {
-        path: "/sale/sale-report",
-        element: <SaleReport />,
+        path: "/sale/sale-list/detail/:id",
+        element: <SaleListDetail />,
       },
       {
         path: "/sale/customer-list",

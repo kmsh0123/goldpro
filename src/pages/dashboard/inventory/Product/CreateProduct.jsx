@@ -31,7 +31,6 @@ import { toast } from "react-toastify";
 import { useGetTypeQuery } from "@/feature/api/inventory/typeApi";
 import { useGetQualityQuery } from "@/feature/api/inventory/qualityApi";
 
-
 const gramToKyatPaeYway = (gram) => {
   const kyatValue = gram / 16.6;
   const kyat = Math.floor(kyatValue);
@@ -46,26 +45,30 @@ const gramToKyatPaeYway = (gram) => {
 };
 
 const kyatPaeYwayToGram = (kyat, pae, yway) => {
-  const totalKyat = parseFloat(kyat || 0) + parseFloat(pae || 0) / 16 + parseFloat(yway || 0) / 128;
+  const totalKyat =
+    parseFloat(kyat || 0) +
+    parseFloat(pae || 0) / 16 +
+    parseFloat(yway || 0) / 128;
   return (totalKyat * 16.6).toFixed(2); // 2 decimal places
 };
 
 const CreateProduct = () => {
   const [productImage, setProductImage] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
-  const [productCreate] = useCreateProductMutation();
+  const [productCreate, { isLoading: ProductLoading }] =
+    useCreateProductMutation();
   const nav = useNavigate();
 
   const [openCategory, setOpenCategory] = useState(false);
   const [searchCategory, setSearchCategory] = useState("");
 
   // Type select state
-    const [openType, setOpenType] = useState(false);
-    const [searchType, setSearchType] = useState("");
-  
-    // Quality select state
-    const [openQuality, setOpenQuality] = useState(false);
-    const [searchQuality, setSearchQuality] = useState("");
+  const [openType, setOpenType] = useState(false);
+  const [searchType, setSearchType] = useState("");
+
+  // Quality select state
+  const [openQuality, setOpenQuality] = useState(false);
+  const [searchQuality, setSearchQuality] = useState("");
 
   const { register, handleSubmit, reset, watch, control, setValue } = useForm({
     defaultValues: {
@@ -98,9 +101,9 @@ const CreateProduct = () => {
     GetCategory?.data?.find((item) => item.id.toString() === selectedCategoryId)
       ?.name || "";
 
-   const selectedTypeName =
-    GetType?.data?.find((item) => item.id.toString() === selectedTypeId)?.name ||
-    "";
+  const selectedTypeName =
+    GetType?.data?.find((item) => item.id.toString() === selectedTypeId)
+      ?.name || "";
 
   const selectedQualityName =
     GetQuality?.data?.find((item) => item.id.toString() === selectedQualityId)
@@ -138,7 +141,7 @@ const CreateProduct = () => {
     item.name.toLowerCase().includes(searchCategory.toLowerCase())
   );
 
-    const filteredType = GetType?.data?.filter((item) =>
+  const filteredType = GetType?.data?.filter((item) =>
     item.name.toLowerCase().includes(searchType.toLowerCase())
   );
 
@@ -270,9 +273,8 @@ const CreateProduct = () => {
           </div> */}
         </div>
 
-         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-         
-         <div className="w-full">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="w-full">
             <label className="block mb-1 font-medium">Type</label>
             <Controller
               name="typeId"
@@ -416,9 +418,7 @@ const CreateProduct = () => {
               )}
             />
           </div>
-          
         </div>
-
 
         {/* Second Row: Image Upload, Name, Description */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -538,9 +538,10 @@ const CreateProduct = () => {
           </Button>
           <Button
             type="submit"
-            className="bg-yellow-600 hover:bg-yellow-700 text-white"
+            className="bg-yellow-600 hover:bg-yellow-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={ProductLoading}
           >
-            Save
+            {ProductLoading ? "Saving..." : "Save"}
           </Button>
         </div>
       </form>
