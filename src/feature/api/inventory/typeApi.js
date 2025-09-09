@@ -10,7 +10,8 @@ export const typeApi = createApi({
   endpoints: (builder) => ({
     getType: builder.query({
       query: () => ({
-        url: `type/list`,
+        // url: `/type/list?page=${page}`,
+        url: `/type/list`,
         method: "GET",
       }),
       providesTags: ["typeApi"],

@@ -11,7 +11,7 @@ import Swal from 'sweetalert2';
 
 const Category = () => {
   const [searchParams] = useSearchParams();
-    const navigate = useNavigate();
+  const navigate = useNavigate();
   
     // Current page from URL
     const page = parseInt(searchParams.get("page")) || 1;

@@ -203,8 +203,9 @@ const Stock = () => {
           "Code",
           "Product Name",
           "Gold Weight",
+          "In Stock",
+          "Out Stock",
           "Sale Date",
-          "Actions",
         ]}
         data={GetStock?.data || []}
         page={page}
@@ -212,41 +213,14 @@ const Stock = () => {
         onPageChange={handlePageChange}
         renderRow={(item, index) => (
           <tr key={item.id}>
-            <td>{skip + index + 1}.</td>
-            <td>{item.customer}</td>
-            <td>{item.order_code}</td>
-            <td>{item.total_quantity}</td>
-            {/* <td>{item.created_at}</td> */}
-            <td>{new Date(item.created_at).toLocaleString()}</td>
-            {/* <td>{item.type}</td>
-            <td>{item.type}</td>
-            <td>{item.type}</td>
-            <td>{item.type}</td>
-            <td>{item.type}</td> */}
-            <td>
-              {/* <Button
-                variant="ghost"
-                size="icon"
-                className="text-yellow-600 hover:text-yellow-700"
-                onClick={() => navigate(`/coa/coa-edit/${item.id}`)}
-              >
-                <SquarePenIcon size={30} />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-[#EA0000] hover:text-[#EA0000]"
-              >
-                <Trash2Icon size={30} />
-              </Button> */}
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-[#00C02A] hover:text-[#00C02A]"
-                onClick={() => navigate(`/sale/sale-list/detail/${item.id}`)}
-              >
-                <EyeIcon size={30} />
-              </Button>
+            <td className="px-4 py-2">{skip + index + 1}.</td>
+            <td className="px-4 py-2">{item.code}</td>
+            <td className="px-4 py-2">{item.product_name}</td>
+            <td className="px-4 py-2">{item.gram || 0} g</td>
+            <td className="px-4 py-2">{item.in || 0}</td>
+            <td className="px-4 py-2">{item.out || 0}</td>
+            <td className="px-4 py-2">
+              {new Date(item.created_at).toLocaleString()}
             </td>
           </tr>
         )}

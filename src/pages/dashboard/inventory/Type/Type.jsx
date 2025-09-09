@@ -19,19 +19,46 @@ import withReactContent from "sweetalert2-react-content";
 const MySwal = withReactContent(Swal);
 
 const Type = () => {
-  const [searchParams] = useSearchParams();
-  const nav = useNavigate();
+  // const [searchParams] = useSearchParams();
+  // const nav = useNavigate();
 
-  // RTK mutations
-  const [deleteType] = useDeleteTypeMutation();
+  // // RTK mutations
+  // const [deleteType] = useDeleteTypeMutation();
+
+  // // Current page from URL
+  // const page = parseInt(searchParams.get("page")) || 1;
+  // const limit = 10;
+  // const skip = (page - 1) * limit;
+
+  // // Fetch types
+  // const { data: GetProducts } = useGetTypeQuery({ page });
+
+  // // Pagination info from backend
+  // const totalPages = GetProducts?.last_page || 1;
+  // const currentPage = GetProducts?.current_page || 1;
+
+  // // Change page
+  // const handlePageChange = (newPage) => {
+  //   if (newPage >= 1 && newPage <= totalPages) {
+  //     nav(`?page=${newPage}`);
+  //   }
+  // };
+
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   // Current page from URL
   const page = parseInt(searchParams.get("page")) || 1;
   const limit = 10;
   const skip = (page - 1) * limit;
 
-  // Fetch types
-  const { data: GetProducts } = useGetTypeQuery({ limit, skip });
+  // Fetch products
+  const { data: GetProducts } = useGetCategoryQuery({ limit, skip });
+
+  // // RTK mutations
+  const [deleteType] = useDeleteTypeMutation();
+
+  console.log("GetProducts", GetProducts);
 
   // Total pages
   const totalItems = GetProducts?.data?.total || 0;
@@ -40,7 +67,7 @@ const Type = () => {
   // Change page
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= totalPages) {
-      nav(`?page=${newPage}`);
+      navigate(`?page=${newPage}`);
     }
   };
 
@@ -94,12 +121,12 @@ const Type = () => {
       <PaginatedTable
         columns={["No.", "Created Date", "Name", "Actions"]}
         data={GetProducts?.data || []}
-        page={page}
+        page={currentPage}
         totalPages={totalPages}
         onPageChange={handlePageChange}
         renderRow={(item, index) => (
           <tr key={item.id}>
-            <td>{skip + index + 1}.</td>
+            <td>{(currentPage - 1) * 10 + index + 1}.</td>
             <td>{item.created_at?.split("T")[0]}</td>
             <td>{item.name}</td>
             <td>
@@ -119,14 +146,6 @@ const Type = () => {
               >
                 <Trash2Icon size={30} />
               </Button>
-              {/* <Button
-                variant="ghost"
-                size="icon"
-                className="text-[#00C02A] hover:text-[#00C02A]"
-                onClick={() => nav(`/inventory/type/${item.id}`)}
-              >
-                <EyeIcon size={30} />
-              </Button> */}
             </td>
           </tr>
         )}
