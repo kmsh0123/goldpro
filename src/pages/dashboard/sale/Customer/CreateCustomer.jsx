@@ -17,21 +17,20 @@ import { toast } from "react-toastify";
 // Helper function to convert KPY to grams
 const kpyToGram = (kyat, pae, yway) => {
   // Convert everything to kyat first, then to grams
-  const totalKyat = kyat + (pae / 16) + (yway / 128);
+  const totalKyat = kyat + pae / 16 + yway / 128;
   return totalKyat * 16.6;
 };
 
 // Helper function to convert grams to KPY
 const gramToKPY = (gramValue) => {
-  // Convert grams to kyat
   const totalKyat = gramValue / 16.6;
-  
+
   const kyat = Math.floor(totalKyat);
   const paeValue = (totalKyat - kyat) * 16;
   const pae = Math.floor(paeValue);
-  const yway = Math.round((paeValue - pae) * 8);
-  
-  return { kyat, pae, yway };
+  const yway = (paeValue - pae) * 8; // allow decimal
+
+  return { kyat, pae, yway: Number(yway.toFixed(2)) };
 };
 
 const CreateCustomer = () => {
@@ -41,7 +40,7 @@ const CreateCustomer = () => {
     kyat: "",
     pae: "",
     yway: "",
-    gram: ""
+    gram: "",
   });
 
   const {
@@ -58,7 +57,7 @@ const CreateCustomer = () => {
       remainingKyat: "",
       remainingPae: "",
       remainingYway: "",
-      remainingGram: ""
+      remainingGram: "",
     },
   });
 
@@ -67,44 +66,46 @@ const CreateCustomer = () => {
     const numValue = value === "" ? "" : Number(value);
     const newRemainingGold = { ...remainingGold, [field]: numValue };
     setRemainingGold(newRemainingGold);
-    
+
     // Auto-calculate gram when KPY changes
-    if (field !== 'gram' && numValue !== "" && 
-        newRemainingGold.kyat !== "" && 
-        newRemainingGold.pae !== "" && 
-        newRemainingGold.yway !== "") {
+    if (
+      field !== "gram" &&
+      numValue !== "" &&
+      newRemainingGold.kyat !== "" &&
+      newRemainingGold.pae !== "" &&
+      newRemainingGold.yway !== ""
+    ) {
       const gramValue = kpyToGram(
         Number(newRemainingGold.kyat) || 0,
         Number(newRemainingGold.pae) || 0,
         Number(newRemainingGold.yway) || 0
       );
-      setRemainingGold(prev => ({ ...prev, gram: gramValue.toFixed(2) }));
+      setRemainingGold((prev) => ({ ...prev, gram: gramValue.toFixed(2) }));
     }
-    
+
     // Auto-calculate KPY when gram changes
-    if (field === 'gram' && numValue !== "") {
+    if (field === "gram" && numValue !== "") {
       const kpyValues = gramToKPY(Number(numValue) || 0);
-      setRemainingGold(prev => ({
+      setRemainingGold((prev) => ({
         ...prev,
         kyat: kpyValues.kyat,
         pae: kpyValues.pae,
-        yway: kpyValues.yway
+        yway: kpyValues.yway,
       }));
     }
   };
 
   const handleCreateCustomer = async (formData) => {
     try {
-      // Add remaining gold data to form data
       const formDataWithGold = {
         ...formData,
         remainingKyat: Number(remainingGold.kyat) || 0,
         remainingPae: Number(remainingGold.pae) || 0,
         remainingYway: Number(remainingGold.yway) || 0,
-        remainingGram: Number(remainingGold.gram) || 0
+        remainingGram: Number(remainingGold.gram) || 0,
       };
-      
-      const {data} = await coaCustomer(formDataWithGold);
+
+      const { data } = await coaCustomer(formDataWithGold);
       console.log("Customer created successfully:", data);
       toast.success("Customer created successfully!");
       reset();
@@ -112,7 +113,7 @@ const CreateCustomer = () => {
     } catch (error) {
       console.error("Error create customer", error);
       toast.error("Error creating customer");
-    } 
+    }
   };
 
   return (
@@ -127,22 +128,10 @@ const CreateCustomer = () => {
 
       <div className="border-b-2"></div>
 
-      <form onSubmit={handleSubmit(handleCreateCustomer)} className="space-y-6 max-w-md">
-        {/* Code Select */}
-        {/* <div>
-          <label className="block mb-1 font-medium">Code</label>
-          <Select value={code} onValueChange={(value) => setCode(value)}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select Code" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="R">R</SelectItem>
-              <SelectItem value="G">G</SelectItem>
-              <SelectItem value="D">D</SelectItem>
-            </SelectContent>
-          </Select>
-        </div> */}
-
+      <form
+        onSubmit={handleSubmit(handleCreateCustomer)}
+        className="space-y-6 max-w-md"
+      >
         {/* Code Input */}
         <div>
           <label className="block mb-1 font-medium">Code</label>
@@ -185,8 +174,10 @@ const CreateCustomer = () => {
 
         {/* Remaining Gold Section */}
         <div className="border-t pt-4">
-          <h2 className="text-lg font-semibold mb-3 text-yellow-600">Remaining Gold Balance</h2>
-          
+          <h2 className="text-lg font-semibold mb-3 text-yellow-600">
+            Remaining Gold Balance
+          </h2>
+
           <div className="grid grid-cols-4 gap-3">
             {/* Kyat Input */}
             <div>
@@ -195,7 +186,9 @@ const CreateCustomer = () => {
                 type="number"
                 placeholder="0"
                 value={remainingGold.kyat}
-                onChange={(e) => handleRemainingGoldChange('kyat', e.target.value)}
+                onChange={(e) =>
+                  handleRemainingGoldChange("kyat", e.target.value)
+                }
                 className="bg-gray-100"
                 min="0"
               />
@@ -208,24 +201,28 @@ const CreateCustomer = () => {
                 type="number"
                 placeholder="0"
                 value={remainingGold.pae}
-                onChange={(e) => handleRemainingGoldChange('pae', e.target.value)}
+                onChange={(e) =>
+                  handleRemainingGoldChange("pae", e.target.value)
+                }
                 className="bg-gray-100"
                 min="0"
                 max="15"
               />
             </div>
 
-            {/* Yway Input */}
+            {/* Yway Input (now allows decimal) */}
             <div>
               <label className="block mb-1 font-medium">ရွေး</label>
               <Input
                 type="number"
+                step="0.01"
                 placeholder="0"
                 value={remainingGold.yway}
-                onChange={(e) => handleRemainingGoldChange('yway', e.target.value)}
+                onChange={(e) =>
+                  handleRemainingGoldChange("yway", e.target.value)
+                }
                 className="bg-gray-100"
                 min="0"
-                max="7"
               />
             </div>
 
@@ -237,19 +234,14 @@ const CreateCustomer = () => {
                 step="0.01"
                 placeholder="0.00"
                 value={remainingGold.gram}
-                onChange={(e) => handleRemainingGoldChange('gram', e.target.value)}
+                onChange={(e) =>
+                  handleRemainingGoldChange("gram", e.target.value)
+                }
                 className="bg-gray-100"
                 min="0"
               />
             </div>
           </div>
-
-          {/* Conversion Info */}
-          {/* <div className="mt-3 text-sm text-gray-600">
-            <p>
-              Conversion: 1 ကျပ် = 16 ပဲ = 128 ရွေး = 16.6 ဂရမ်
-            </p>
-          </div> */}
         </div>
 
         {/* Buttons */}

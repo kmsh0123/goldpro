@@ -54,7 +54,7 @@ const Type = () => {
   const skip = (page - 1) * limit;
 
   // Fetch products
-  const { data: GetProducts } = useGetCategoryQuery({ limit, skip });
+  const { data: GetProducts } = useGetTypeQuery({ limit, skip });
 
   // // RTK mutations
   const [deleteType] = useDeleteTypeMutation();
@@ -122,12 +122,12 @@ const Type = () => {
       <PaginatedTable
         columns={["No.", "Created Date", "Name", "Actions"]}
         data={GetProducts?.data || []}
-        page={currentPage}
+        page={page}
         totalPages={totalPages}
         onPageChange={handlePageChange}
         renderRow={(item, index) => (
-          <tr key={item.id}>
-            <td>{(currentPage - 1) * 10 + index + 1}.</td>
+          <tr key={item?.id}>
+            <td>{index + 1}</td>
             <td>{item.created_at?.split("T")[0]}</td>
             <td>{item.name}</td>
             <td>

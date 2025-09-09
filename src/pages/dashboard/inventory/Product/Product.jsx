@@ -25,7 +25,6 @@ import Swal from "sweetalert2";
 
 const Product = () => {
   const [searchParams] = useSearchParams();
-  const [deleteProduct] = useDeleteProductMutation();
   const navigate = useNavigate();
 
   // Current page from URL
@@ -34,8 +33,8 @@ const Product = () => {
   const skip = (page - 1) * limit;
 
   // Fetch products
-  const { data: GetProducts } = useGetProductQuery();
-
+  const { data: GetProducts } = useGetProductQuery({ limit, skip });
+  const [deleteProduct] = useDeleteProductMutation();
   console.log("GetProduct :",GetProducts);
   
 
@@ -63,10 +62,10 @@ const Product = () => {
             if (result.isConfirmed) {
               try {
                 await deleteProduct(id).unwrap();
-                refetch();
+                // refetch();
                 Swal.fire({
                   title: "Deleted!",
-                  text: "Quality has been deleted.",
+                  text: "Product has been deleted.",
                   icon: "success",
                   timer: 1500,
                   showConfirmButton: false,
@@ -74,10 +73,10 @@ const Product = () => {
               } catch (error) {
                 Swal.fire({
                   title: "Error!",
-                  text: "Failed to delete quality.",
+                  text: "Failed to delete Product.",
                   icon: "error",
                 });
-                console.error("Failed to delete quality:", error);
+                console.error("Failed to delete Product:", error);
               }
             }
           });

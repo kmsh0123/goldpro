@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableHeader, TableRow, TableHead, TableCell, TableBody } from "@/components/ui/table";
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { useGetCategoryQuery } from '@/feature/api/inventory/categoryApi';
+import { useDeleteCategoryMutation, useGetCategoryQuery } from '@/feature/api/inventory/categoryApi';
 import PaginatedTable from '@/components/dashboard/ResuableComponents/PaginatedTable';
 import Swal from 'sweetalert2';
 
@@ -20,7 +20,7 @@ const Category = () => {
   
     // Fetch products
     const { data: GetProducts } = useGetCategoryQuery({ limit, skip });
-  
+    const [deleteCategory] = useDeleteCategoryMutation()
     console.log("GetProducts", GetProducts);
   
     // Total pages
@@ -46,8 +46,8 @@ const Category = () => {
         }).then(async (result) => {
           if (result.isConfirmed) {
             try {
-              await deleteQuality(id).unwrap();
-              refetch();
+              await deleteCategory(id).unwrap();
+              // refetch();
     
               Swal.fire({
                 title: "Deleted!",

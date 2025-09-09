@@ -50,4 +50,4 @@ export const categoryApi = createApi({
   }),
 });
 
-export const {useGetCategoryQuery,useCreateCategoryMutation,useUpdateCategoryMutation} = categoryApi;
+export const {useGetCategoryQuery,useCreateCategoryMutation,useUpdateCategoryMutation,useDeleteCategoryMutation} = categoryApi;
