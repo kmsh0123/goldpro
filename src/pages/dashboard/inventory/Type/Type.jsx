@@ -15,6 +15,7 @@ import {
 } from "@/feature/api/inventory/typeApi";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
+import { useGetCategoryQuery } from "@/feature/api/inventory/categoryApi";
 
 const MySwal = withReactContent(Swal);
 
