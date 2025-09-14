@@ -39,9 +39,9 @@ const initialState = {
 
 const convertToKyat = (kyat, pae, yway) => {
   const totalKyat = Number(kyat) + Number(pae) / 16 + Number(yway) / (16 * 8);
-  console.log(
-    `[convertToKyat] kyat: ${kyat}, pae: ${pae}, yway: ${yway} => totalKyat: ${totalKyat}`
-  );
+  // console.log(
+  //   `[convertToKyat] kyat: ${kyat}, pae: ${pae}, yway: ${yway} => totalKyat: ${totalKyat}`
+  // );
   return totalKyat;
 };
 

@@ -53,9 +53,13 @@ const convertTo24K = (kyat, pae, yway, quality) => {
 
   // Convert to 24K based on quality
   let converted24K = totalKyat;
-  if (quality === 18) converted24K = (totalKyat * 16) / 12;
-  else if (quality === 22) converted24K = (totalKyat * 17.5) / 16;
-  else if (quality === 23) converted24K = (totalKyat * 17) / 16;
+  if (quality === 18) converted24K = (totalKyat / 16) * 12;
+  else if (quality === 22) converted24K = (totalKyat / 17.5) * 16;
+  else if (quality === 23) converted24K = (totalKyat / 17) * 16;
+  else if (quality === 24) converted24K = totalKyat * 1;
+
+  console.log("Quality :", quality);
+  console.log("totalKyat :", totalKyat);
 
   // console.log("convertTo24K output:", converted24K);
   return converted24K;
@@ -84,7 +88,7 @@ const gramToKPY = (gramValue) => {
   const kyat = Math.floor(totalKyat);
   const paeValue = (totalKyat - kyat) * 16;
   const pae = Math.floor(paeValue);
-  const yway = Math.round((paeValue - pae) * 8);
+  const yway = Math.floor((paeValue - pae) * 8);
 
   const result = { kyat, pae, yway, gram: parseFloat(gramValue.toFixed(2)) };
   // console.log("gramToKPY output:", result);
@@ -95,6 +99,11 @@ const gramToKPY = (gramValue) => {
 const addKPY = (kpy1, kpy2) => {
   // console.log("addKPY input:", { kpy1, kpy2 });
   // Convert both to grams
+  //  const grams1 =
+  //   kpyToGram(kpy1.kyat, kpy1.pae, kpy1.yway) + (Number(kpy1.gram) || 0);
+  // const grams2 =
+  //   kpyToGram(kpy2.kyat, kpy2.pae, kpy2.yway) + (Number(kpy2.gram) || 0);
+
   const grams1 = kpyToGram(kpy1.kyat, kpy1.pae, kpy1.yway);
   const grams2 = kpyToGram(kpy2.kyat, kpy2.pae, kpy2.yway);
 
@@ -106,7 +115,7 @@ const addKPY = (kpy1, kpy2) => {
   const kyat = Math.floor(totalKyatValue);
   const paeValue = (totalKyatValue - kyat) * 16;
   const pae = Math.floor(paeValue);
-  const yway = Math.round((paeValue - pae) * 8);
+  const yway = Math.floor((paeValue - pae) * 8);
 
   const result = { kyat, pae, yway, gram: parseFloat(totalGrams.toFixed(2)) };
   // console.log("addKPY output:", result);
@@ -142,7 +151,6 @@ const POS = () => {
   // });
 
   const convert24K = useSelector((state) => state.cart.convert24K);
-  const convert24KDetail = useSelector((state) => state.cart.convert24KDetail);
   // console.log("convert24K:", convert24K);
   // console.log("convert24KDetail:", convert24KDetail);
 
@@ -193,16 +201,121 @@ const POS = () => {
         Number(item.karat || 24)
       );
 
-      // console.log("Item 24K value:", convert24KValue);
+      console.log("Item 24K value:", convert24KValue);
+      const convert24KDetail = convertToKPY(convert24KValue);
+      console.log("Kyat Pae Yway Gram", convert24KDetail);
+
+      // return sum + convert24KDetail.kyat + convert24KDetail.pae/16 + convert24KDetail.yway/128;
       return sum + convert24KValue;
     }, 0);
 
     // console.log("Total 24K value (kyat):", total24KValue);
     // Convert total 24K value to KPY format
     const result = convertToKPY(total24KValue);
-    // console.log("calculateTotalConvert24K result:", result);
     return result;
   };
+
+  // Replace your existing calculateTotalGoldDirectAdd with this implementation
+  const calculateTotalGoldDirectAdd = () => {
+    // If no items, return zeros
+    if (!items || items.length === 0) {
+      return { kyat: 0, pae: 0, yway: 0, gram: 0 };
+    }
+
+    // Sum kyat/pae/yway/gram directly from each item's convert24KDetail
+    let sumKyat = 0;
+    let sumPae = 0;
+    let sumYway = 0;
+    let sumGram = 0;
+
+    items.forEach((item, index) => {
+      const totals = calculateItemTotals(item); // returns convert24KDetail
+      const d = totals.convert24KDetail || {};
+
+      sumKyat += Number(d.kyat || 0);
+      sumPae += Number(d.pae || 0);
+      sumYway += Number(d.yway || 0);
+      sumGram += Number(d.gram || 0);
+    });
+
+    // Normalize kyat/pae/yway (carry-over: 8 yway = 1 pae, 16 pae = 1 kyat)
+    const normalized = normalizeKPY(sumKyat, sumPae, sumYway);
+
+    // Keep gram as the direct summed grams (rounded to 2 decimals for display)
+    return {
+      kyat: normalized.kyat,
+      pae: normalized.pae,
+      yway: normalized.yway,
+      gram: parseFloat(sumGram.toFixed(2)),
+    };
+  };
+
+  // Calculate sum of all convertTo24K detail results
+  // const calculateTotalConvert24K = () => {
+  //   if (!items || items.length === 0) {
+  //     return { kyat: 0, pae: 0, yway: 0, gram: 0 };
+  //   }
+
+  //   // Sum all individual convert24K values in kyat units with better precision
+  //   let totalKyatValue = 0;
+
+  //   items.forEach((item) => {
+  //     const qty = Number(item.qty || 1);
+  //     const alyotKyat = Number(item.alyautKyat || 0) * qty;
+  //     const alyotPae = Number(item.alyautPae || 0) * qty;
+  //     const alyotYway = Number(item.alyautYway || 0) * qty;
+
+  //     const shweKyat = Number(item.kyat || 0);
+  //     const shwePae = Number(item.pae || 0);
+  //     const shweYway = Number(item.yway || 0);
+
+  //     // Calculate net weight (shwe + alyot) and normalize
+  //     const netKPY = normalizeKPY(
+  //       shweKyat + alyotKyat,
+  //       shwePae + alyotPae,
+  //       shweYway + alyotYway
+  //     );
+
+  //     // Convert to 24K
+  //     const convert24KValue = convertTo24K(
+  //       netKPY.kyat,
+  //       netKPY.pae,
+  //       netKPY.yway,
+  //       Number(item.karat || 24)
+  //     );
+
+  //     totalKyatValue += convert24KValue;
+
+  //     console.log(totalKyatValue);
+
+  //   });
+
+  // //   const convertToKPY = (kyatValue) => {
+  // //   // console.log("convertToKPY input:", kyatValue);
+  // //   const kyat = Math.floor(kyatValue);
+  // //   const paeValue = (kyatValue - kyat) * 16;
+  // //   const pae = Math.floor(paeValue);
+  // //   const yway = Math.floor((paeValue - pae) * 8);
+  // //   const gram = kyatValue * 16.6; // Convert to grams
+
+  // //   const result = { kyat, pae, yway, gram };
+  // //   // console.log("convertToKPY output:", result);
+  // //   return result;
+  // // };
+
+  // const kpy = convertToKPY(totalKyatValue)
+
+  // console.log("KPY :",kpy);
+
+  //   // Convert total 24K value to KPY format with proper rounding
+  //   const totalKyat = Math.floor(totalKyatValue);
+  //   const paeValue = (totalKyatValue - totalKyat) * 16;
+  //   const pae = Math.floor(paeValue);
+  //   const yway = Math.floor((paeValue - pae) * 8);
+  //   const gram = parseFloat((totalKyatValue * 16.6).toFixed(2));
+
+  //   return { kyat: totalKyat, pae, yway, gram };
+  // };
 
   // Calculate total payments in grams
   const calculateTotalPaymentsInGrams = () => {
@@ -297,7 +410,7 @@ const POS = () => {
     // 2. Convert Gold (24K) to grams
     const gold24K = calculateTotalConvert24K();
     const gold24KGrams = kpyToGram(gold24K.kyat, gold24K.pae, gold24K.yway);
-    // console.log("Gold 24K grams:", gold24KGrams);
+    console.log("Gold 24K grams:", gold24KGrams);
 
     // 3. Get total payments in grams
     const totalPaymentsGrams = calculateTotalPaymentsInGrams();
@@ -320,6 +433,45 @@ const POS = () => {
     // console.log("calculateRemainingGold result:", result);
     return result;
   };
+
+  // Replace your calculateRemainingGold with this version
+  // const calculateRemainingGold = () => {
+  //   // 1. Remaining balance in grams (use kpy -> gram)
+  //   const remainingBalanceGrams = kpyToGram(
+  //     customerRemainingBalance.kyat,
+  //     customerRemainingBalance.pae,
+  //     customerRemainingBalance.yway
+  //   );
+
+  //   // 2. Gold (24K) — use the precise gram returned by convertToKPY
+  //   const gold24K = calculateTotalConvert24K(); // { kyat, pae, yway, gram }
+  //   // Prefer the precise gram value if available; otherwise fallback to kpyToGram
+  //   const gold24KGrams =
+  //     typeof gold24K.gram === "number" && !isNaN(gold24K.gram)
+  //       ? gold24K.gram
+  //       : kpyToGram(gold24K.kyat, gold24K.pae, gold24K.yway);
+
+  //   // 3. Payments & discounts in grams
+  //   const totalPaymentsGrams = calculateTotalPaymentsInGrams();
+  //   const totalDiscountPaymentsGrams = calculateTotalDiscountPaymentsInGrams();
+
+  //   // 4. Apply formula: (Remaining balance + Gold 24K) - (Payment - Discount)
+  //   let totalRemainingGrams =
+  //     gold24KGrams +
+  //     remainingBalanceGrams -
+  //     (totalPaymentsGrams - totalDiscountPaymentsGrams);
+
+  //   // avoid tiny negative due to floating error
+  //   if (Math.abs(totalRemainingGrams) < 1e-9) totalRemainingGrams = 0;
+  //   if (totalRemainingGrams < 0) totalRemainingGrams = 0;
+
+  //   // Round grams to 2 decimals (display precision)
+  //   totalRemainingGrams = parseFloat(totalRemainingGrams.toFixed(2));
+
+  //   // 5. Convert back to K P Y
+  //   const result = gramToKPY(totalRemainingGrams);
+  //   return result;
+  // };
 
   // Convert Previous Balance to 24K
   const convertPreviousBalanceTo24K = () => {
@@ -485,13 +637,13 @@ const POS = () => {
   };
 
   const handleDeletePayment = () => {
-  // Clear the list of added payments
-  dispatch(resetPayments());
+    // Clear the list of added payments
+    dispatch(resetPayments());
   };
 
   const handleDeleteDiscount = () => {
-  // Clear the list of added payments
-  dispatch(resetDiscountPayments());
+    // Clear the list of added payments
+    dispatch(resetDiscountPayments());
   };
 
   useEffect(() => {
@@ -503,6 +655,13 @@ const POS = () => {
   const calculateItemTotals = (item) => {
     // console.log("calculateItemTotals called for item:", item);
     const qty = Number(item.qty || 1);
+    const qualityName =
+      item.qualityName || (item.karat ? `${item.karat}K` : "24K");
+    const karat =
+      Number(item.karat) ||
+      (typeof item.qualityName === "string"
+        ? Number(item.qualityName.replace(/K/i, ""))
+        : 24);
 
     // Multiply alyot values by quantity
     const alyotKyat = Number(item.alyautKyat || 0) * qty;
@@ -527,8 +686,10 @@ const POS = () => {
     const netYway = netKPY.yway;
 
     // Calculate net grams
-    const netGram =
-      kpyToGram(netKyat, netPae, netYway) + (alyotGram + shweGram);
+    // const netGram =
+    //   kpyToGram(netKyat, netPae, netYway);
+
+    const netGram = Number(shweGram || 0) + Number(alyotGram || 0);
 
     // Calculate 24K conversion for this item
     const convert24KValue = convertTo24K(
@@ -539,7 +700,9 @@ const POS = () => {
     );
     const convert24KDetail = convertToKPY(convert24KValue);
 
-    // console.log("Net Weight:", { alyotKyat, alyotPae, alyotYway, alyotGram });
+    console.log("convert24KValue :", convert24KValue);
+    console.log("convertTo24K :", convertTo24K);
+    console.log("convert24KDetail :", convert24KDetail);
 
     const result = {
       qty,
@@ -664,7 +827,7 @@ const POS = () => {
     const paeValue = (totalKyat - kyat) * 16;
     const pae = Math.floor(paeValue);
 
-    const yway = Math.round((paeValue - pae) * 8);
+    const yway = Math.floor((paeValue - pae) * 8);
 
     // Step 3: convert Kyat to grams
     const gram = totalKyat * 16.6;
@@ -722,9 +885,9 @@ const POS = () => {
         <Card className="p-4">
           {/* Invoice Info */}
           <div className="text-sm space-y-1 mb-4">
-            <p>Voucher Code: {items[0]?.voucherCode || "N/A"}</p>
-            <p>Customer Name: {items[0]?.customerName || "N/A"}</p>
-            <p>Gold Quality: {items[0]?.qualityName || "N/A"}</p>
+            <p>Voucher Code: {items[0]?.voucherCode || ""}</p>
+            <p>Customer Name: {items[0]?.customerName || ""}</p>
+            <p>Today Gold Rate: {items[0]?.todayRate || 0} Kyats</p>
             <p>Date: {new Date().toLocaleDateString()}</p>
             <p>Time: {new Date().toLocaleTimeString()}</p>
           </div>
@@ -742,6 +905,9 @@ const POS = () => {
                   </th>
                   <th className="border p-1" rowSpan={2}>
                     Qty
+                  </th>
+                  <th className="border p-1" rowSpan={2}>
+                    Quality
                   </th>
                   <th className="border p-1" colSpan={4}>
                     အလျော့တွက်
@@ -790,7 +956,7 @@ const POS = () => {
               <tbody>
                 {items && items.length === 0 ? (
                   <tr>
-                    <td className="border p-1" colSpan={20}>
+                    <td className="border p-1" colSpan={21}>
                       No items added.
                     </td>
                   </tr>
@@ -799,6 +965,8 @@ const POS = () => {
                     // console.log("Rendering item:", item);
                     const totals = calculateItemTotals(item);
                     const todayRate = Number(item.todayRate || 0);
+
+                    console.log("Total :", totals);
 
                     return (
                       <tr key={index}>
@@ -812,6 +980,10 @@ const POS = () => {
                           {totals.qty}
                         </td>
 
+                        <td className="border p-1 bg-yellow-100">
+                          {item.qualityName}
+                        </td>
+
                         {/* အလျော့တွက် - FIXED with quantity multiplication */}
                         <td className="border p-1 bg-yellow-100">
                           {totals.alyotKyat}
@@ -823,7 +995,7 @@ const POS = () => {
                           {totals.alyotYway}
                         </td>
                         <td className="border p-1 bg-yellow-100">
-                          {totals.alyotGram.toFixed(4)}
+                          {totals.alyotGram.toFixed(2)}
                         </td>
 
                         {/* လက်ခ */}
@@ -889,6 +1061,32 @@ const POS = () => {
               </tbody>
 
               <tfoot>
+                {/* Total Gold */}
+                <tr>
+                  <td className="border p-1"></td>
+                  <td className="border p-1 text-center font-bold">
+                    Total Gold
+                  </td>
+                  <td className="border p-1"></td>
+                  <td className="border p-1" colSpan={4}></td>
+                  <td className="border p-1"></td>
+                  <td className="border p-1"></td>
+                  <td className="border p-1" colSpan={4}></td>
+                  <td className="border p-1" colSpan={4}></td>
+                  {/* Display sum of all convertTo24K detail results */}
+                  <td className="border p-1">
+                    {calculateTotalGoldDirectAdd()?.kyat || 0}
+                  </td>
+                  <td className="border p-1">
+                    {calculateTotalGoldDirectAdd()?.pae || 0}
+                  </td>
+                  <td className="border p-1">
+                    {calculateTotalGoldDirectAdd()?.yway || 0}
+                  </td>
+                  <td className="border p-1">
+                    {calculateTotalGoldDirectAdd()?.gram?.toFixed(2) || 0}
+                  </td>
+                </tr>
                 {/* Gold (24K) Row */}
                 <tr>
                   <td className="border p-1"></td>
@@ -897,6 +1095,7 @@ const POS = () => {
                   </td>
                   <td className="border p-1"></td>
                   <td className="border p-1" colSpan={4}></td>
+                  <td className="border p-1"></td>
                   <td className="border p-1"></td>
                   <td className="border p-1" colSpan={4}></td>
                   <td className="border p-1" colSpan={4}></td>
@@ -947,6 +1146,7 @@ const POS = () => {
                   <td className="border p-1"></td>
                   <td className="border p-1" colSpan={4}></td>
                   <td className="border p-1"></td>
+                  <td className="border p-1"></td>
                   <td className="border p-1" colSpan={4}></td>
                   <td className="border p-1" colSpan={4}></td>
                   <td className="border p-1">
@@ -990,6 +1190,7 @@ const POS = () => {
                 <tr>
                   <td className="border p-1"></td>
                   <td className="border p-1 text-center font-bold">Payment</td>
+                  <td className="border p-1"></td>
                   <td className="border p-1"></td>
                   <td className="border p-1">
                     {calculateTotalPayments().kyat}
@@ -1069,6 +1270,7 @@ const POS = () => {
                     Payment (Cash)
                   </td>
                   <td className="border p-1"></td>
+                  <td className="border p-1"></td>
                   <td className="border p-1" colSpan={13}>
                     ငွေပမာဏ: {Number(cash || 0)?.toLocaleString()} Ks
                   </td>
@@ -1096,6 +1298,7 @@ const POS = () => {
                     Discount Payment
                   </td>
                   <td className="border p-1"></td>
+                  <td className="border p-1"></td>
                   <td className="border p-1">
                     {calculateTotalDiscount().kyat}
                   </td>
@@ -1115,24 +1318,25 @@ const POS = () => {
                   <td className="border p-1" colSpan={4}></td>
                   {/* //Delete Button */}
                   {discountPayments && discountPayments.length > 0 && (
-                    <td className="border p-1"><Button
-                      onClick={handleDeleteDiscount}
-                      className="border p-5 bg-red-400 text-black hover:bg-red-500 hover:text-white"
-                    >
-                      X
-                    </Button></td>
+                    <td className="border p-1">
+                      <Button
+                        onClick={handleDeleteDiscount}
+                        className="border p-5 bg-red-400 text-black hover:bg-red-500 hover:text-white"
+                      >
+                        X
+                      </Button>
+                    </td>
                   )}
                   {/* //Delete Button */}
                 </tr>
                 {/* )} */}
-                  
 
                 <tr>
                   <td className="border p-1"></td>
                   <td className="border p-1 text-center font-bold">
                     Total (Cash)
                   </td>
-                  <td className="border p-1" colSpan={18}>
+                  <td className="border p-1" colSpan={19}>
                     {calculateTotalCash()
                       ? calculateTotalCash().toLocaleString()
                       : 0}{" "}
@@ -1144,6 +1348,7 @@ const POS = () => {
                 <tr className="bg-green-100 font-bold">
                   <td className="border p-1"></td>
                   <td className="border p-1 text-center">Remaining Gold</td>
+                  <td className="border p-1"></td>
                   <td className="border p-1"></td>
                   <td className="border p-1">
                     {calculateRemainingGold()?.kyat || 0}

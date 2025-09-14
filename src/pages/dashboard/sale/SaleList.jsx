@@ -144,21 +144,21 @@ const SaleList = () => {
             <td>{item.type}</td>
             <td>{item.type}</td> */}
             <td>
-              <Button
+              {/* <Button
                 variant="ghost"
                 size="icon"
                 className="text-yellow-600 hover:text-yellow-700"
                 onClick={() => navigate(`/coa/coa-edit/${item.id}`)}
               >
                 <SquarePenIcon size={30} />
-              </Button>
-              <Button
+              </Button> */}
+              {/* <Button
                 variant="ghost"
                 size="icon"
                 className="text-[#EA0000] hover:text-[#EA0000]"
               >
                 <Trash2Icon size={30} />
-              </Button>
+              </Button> */}
               <Button
                 variant="ghost"
                 size="icon"

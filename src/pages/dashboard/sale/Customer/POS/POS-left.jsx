@@ -442,7 +442,7 @@ const POSLeft = () => {
                     </Button>
                   </div>
                 </PopoverTrigger>
-                <PopoverContent className="w-80 p-0">
+                <PopoverContent className="w-32 p-0" align="start">
                   <Command>
                     <CommandInput
                       placeholder="Search customer..."
@@ -473,28 +473,30 @@ const POSLeft = () => {
         </div>
       </div>
 
-      <div className="flex items-center mt-5 gap-5 w-full">
-        <div className="w-1/2">
-          <label className="block mb-1 font-medium">Voucher Code</label>
+      <div className="flex items-center gap-5 mt-5 w-full">
+          <div className="">
+            <label className="block mb-1 font-medium">Voucher Code</label>
           <Input
             value={voucherCode}
             onChange={(e) => setVoucherCode(e.target.value)}
             placeholder="Voucher Code"
+            className="w-32 bg-gray-200"
           />
-        </div>
+          </div>
 
-        <div className="w-1/2">
-          <label className="block mb-1 font-medium">Today Gold Rate</label>
+         <div className="">
+           <label className="block mb-1 font-medium">Today Gold Rate</label>
           <Input
             value={todayRate}
             onChange={(e) => setTodayRate(e.target.value)}
             placeholder="Today Gold Rate"
+            className="w-32 bg-gray-200"
           />
-        </div>
+         </div>
       </div>
 
       {/* Product Info */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="flex flex-row items-center gap-5">
         <div>
           <label className="block mb-1 font-medium">Product Name</label>
           <Controller
@@ -508,13 +510,13 @@ const POSLeft = () => {
                       type="button"
                       variant="outline"
                       role="combobox"
-                      className="w-full justify-between"
+                      className="w-32 justify-between"
                     >
                       {selectedProductName || "Select Product"}
                     </Button>
                   </div>
                 </PopoverTrigger>
-                <PopoverContent className="w-80 p-0">
+                <PopoverContent className="w-32 p-0" align="start">
                   <Command>
                     <CommandInput
                       placeholder="Search product..."
@@ -557,18 +559,19 @@ const POSLeft = () => {
                       type="button"
                       variant="outline"
                       role="combobox"
-                      className="w-full justify-between"
+                      className="w-32 justify-between"
                     >
                       {selectedTypeName || "Select Type"}
                     </Button>
                   </div>
                 </PopoverTrigger>
-                <PopoverContent className="w-80 p-0">
+                <PopoverContent className="w-32 p-0" align="start">
                   <Command>
                     <CommandInput
                       placeholder="Search type..."
                       value={searchTypeName}
                       onValueChange={setSearchTypeName}
+                      
                     />
                     <CommandList className="max-h-40 overflow-y-auto">
                       <CommandEmpty>No results found.</CommandEmpty>
@@ -593,7 +596,60 @@ const POSLeft = () => {
           />
         </div>
 
-        <div>
+       
+
+        <div className="w-full">
+          <label className="block mb-1 font-medium">Category</label>
+          <Controller
+            name="categoryId"
+            control={control}
+            render={({ field }) => (
+              <Popover open={openCategory} onOpenChange={setOpenCategory}>
+                <PopoverTrigger asChild>
+                  <div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      role="combobox"
+                      className="w-32 justify-between"
+                    >
+                      {selectedCategoryName || "Select Category"}
+                    </Button>
+                  </div>
+                </PopoverTrigger>
+                <PopoverContent className="w-32 p-0" align="start">
+                  <Command>
+                    <CommandInput
+                      placeholder="Search category..."
+                      value={searchCategory}
+                      onValueChange={setSearchCategory}
+                    />
+                    <CommandList className="max-h-40 overflow-y-auto">
+                      <CommandEmpty>No results found.</CommandEmpty>
+                      <CommandGroup>
+                        {filteredCategory?.map((item) => (
+                          <CommandItem
+                            key={item.id}
+                            onSelect={() => {
+                              field.onChange(item.id.toString());
+                              setOpenCategory(false);
+                            }}
+                          >
+                            {item.name}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            )}
+          />
+        </div>
+      </div>
+
+      <div className="flex items-center gap-5">
+         <div>
           <label className="block mb-1 font-medium">Gold Quality</label>
           <Controller
             name="qualityId"
@@ -606,13 +662,13 @@ const POSLeft = () => {
                       type="button"
                       variant="outline"
                       role="combobox"
-                      className="w-full justify-between"
+                      className="w-32 justify-between"
                     >
                       {selectedQualityName || "Select Quality"}
                     </Button>
                   </div>
                 </PopoverTrigger>
-                <PopoverContent className="w-80 p-0">
+                <PopoverContent className="w-32 p-0" align="start">
                   <Command>
                     <CommandInput
                       placeholder="Search quality..."
@@ -649,55 +705,6 @@ const POSLeft = () => {
             readOnly
             placeholder="Stock"
             className="w-32 bg-gray-200 cursor-not-allowed"
-          />
-        </div>
-
-        <div className="w-full">
-          <label className="block mb-1 font-medium">Category</label>
-          <Controller
-            name="categoryId"
-            control={control}
-            render={({ field }) => (
-              <Popover open={openCategory} onOpenChange={setOpenCategory}>
-                <PopoverTrigger asChild>
-                  <div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      role="combobox"
-                      className="w-full justify-between"
-                    >
-                      {selectedCategoryName || "Select Category"}
-                    </Button>
-                  </div>
-                </PopoverTrigger>
-                <PopoverContent className="w-80 p-0">
-                  <Command>
-                    <CommandInput
-                      placeholder="Search category..."
-                      value={searchCategory}
-                      onValueChange={setSearchCategory}
-                    />
-                    <CommandList className="max-h-40 overflow-y-auto">
-                      <CommandEmpty>No results found.</CommandEmpty>
-                      <CommandGroup>
-                        {filteredCategory?.map((item) => (
-                          <CommandItem
-                            key={item.id}
-                            onSelect={() => {
-                              field.onChange(item.id.toString());
-                              setOpenCategory(false);
-                            }}
-                          >
-                            {item.name}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-            )}
           />
         </div>
       </div>
