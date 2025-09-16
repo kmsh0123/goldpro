@@ -39,9 +39,9 @@ const normalizeKPY = (kyat, pae, yway) => {
 const kpyToGram = (kyat, pae, yway) => {
   // console.log("kpyToGram input:", { kyat, pae, yway });
   // Convert everything to kyat first, then to grams
-  const totalKyat = kyat + pae / 16 + yway / 128;
+  const totalKyat = kyat + (pae / 16) + (yway / 128);
   const result = totalKyat * 16.6;
-  // console.log("kpyToGram output:", result);
+  console.log("kpyToGram output:", result);
   return result;
 };
 
@@ -246,7 +246,7 @@ const POS = () => {
       kyat: normalized.kyat,
       pae: normalized.pae,
       yway: normalized.yway,
-      gram: parseFloat(sumGram.toFixed(2)),
+      gram: parseFloat(sumGram),
     };
   };
 
@@ -397,106 +397,138 @@ const POS = () => {
 
   // Calculate remaining gold using the formula:
   // Remaining gold = (Remaining balance + Gold (24K)) - (Payment - Discount Payment)
-  const calculateRemainingGold = () => {
-    // console.log("calculateRemainingGold called");
-    // 1. Convert remaining balance to grams
-    const remainingBalanceGrams = kpyToGram(
-      customerRemainingBalance.kyat,
-      customerRemainingBalance.pae,
-      customerRemainingBalance.yway
-    );
-    // console.log("Remaining balance grams:", remainingBalanceGrams);
-
-    // 2. Convert Gold (24K) to grams
-    const gold24K = calculateTotalConvert24K();
-    const gold24KGrams = kpyToGram(gold24K.kyat, gold24K.pae, gold24K.yway);
-    console.log("Gold 24K grams:", gold24KGrams);
-
-    // 3. Get total payments in grams
-    const totalPaymentsGrams = calculateTotalPaymentsInGrams();
-    // console.log("Total payments grams:", totalPaymentsGrams);
-
-    // 4. Get total discount payments in grams
-    const totalDiscountPaymentsGrams = calculateTotalDiscountPaymentsInGrams();
-    // console.log("Total discount payments grams:", totalDiscountPaymentsGrams);
-
-    // 5. Apply the formula: (Remaining balance + Gold 24K) - (Payment - Discount)
-    // const totalRemainingGrams = remainingBalanceGrams + gold24KGrams;
-    const totalRemainingGrams =
-      gold24KGrams +
-      remainingBalanceGrams -
-      (totalPaymentsGrams - totalDiscountPaymentsGrams);
-    // console.log("Total remaining grams:", totalRemainingGrams);
-
-    // Convert back to KPY format
-    const result = gramToKPY(totalRemainingGrams); // Ensure non-negative value
-    // console.log("calculateRemainingGold result:", result);
-    return result;
-  };
-
-  // Replace your calculateRemainingGold with this version
   // const calculateRemainingGold = () => {
-  //   // 1. Remaining balance in grams (use kpy -> gram)
+  //   // console.log("calculateRemainingGold called");
+  //   // 1. Convert remaining balance to grams
   //   const remainingBalanceGrams = kpyToGram(
   //     customerRemainingBalance.kyat,
   //     customerRemainingBalance.pae,
   //     customerRemainingBalance.yway
   //   );
+  //   console.log("Remaining balance grams:", remainingBalanceGrams);
 
-  //   // 2. Gold (24K) — use the precise gram returned by convertToKPY
-  //   const gold24K = calculateTotalConvert24K(); // { kyat, pae, yway, gram }
-  //   // Prefer the precise gram value if available; otherwise fallback to kpyToGram
+  //   // 2. Convert Gold (24K) to grams
+  //   const gold24K = calculateTotalConvert24K();
+  //   // const gold24KGrams = kpyToGram(gold24K.kyat, gold24K.pae, gold24K.yway);
+  //   // console.log("Gold 24K grams:", gold24K);
   //   const gold24KGrams =
-  //     typeof gold24K.gram === "number" && !isNaN(gold24K.gram)
-  //       ? gold24K.gram
-  //       : kpyToGram(gold24K.kyat, gold24K.pae, gold24K.yway);
+  // typeof gold24K.gram === "number" && !isNaN(gold24K.gram)
+  //   ? gold24K.gram
+  //   : kpyToGram(gold24K.kyat, gold24K.pae, gold24K.yway);
+  //   console.log("Gold 24K grams:", gold24KGrams);
 
-  //   // 3. Payments & discounts in grams
+
+    
+  //   // 3. Get total payments in grams
   //   const totalPaymentsGrams = calculateTotalPaymentsInGrams();
+  //   // console.log("Total payments grams:", totalPaymentsGrams);
+
+  //   // 4. Get total discount payments in grams
   //   const totalDiscountPaymentsGrams = calculateTotalDiscountPaymentsInGrams();
+  //   // console.log("Total discount payments grams:", totalDiscountPaymentsGrams);
 
-  //   // 4. Apply formula: (Remaining balance + Gold 24K) - (Payment - Discount)
-  //   let totalRemainingGrams =
-  //     gold24KGrams +
-  //     remainingBalanceGrams -
-  //     (totalPaymentsGrams - totalDiscountPaymentsGrams);
+  //   // 5. Apply the formula: (Remaining balance + Gold 24K) - (Payment - Discount)
+  //   // const totalRemainingGrams = remainingBalanceGrams + gold24KGrams;
+  //   const totalRemainingGrams =
+  //     (gold24KGrams + remainingBalanceGrams) - (totalPaymentsGrams - totalDiscountPaymentsGrams);
+  //   console.log("Total remaining grams:", totalRemainingGrams);
 
-  //   // avoid tiny negative due to floating error
-  //   if (Math.abs(totalRemainingGrams) < 1e-9) totalRemainingGrams = 0;
-  //   if (totalRemainingGrams < 0) totalRemainingGrams = 0;
-
-  //   // Round grams to 2 decimals (display precision)
-  //   totalRemainingGrams = parseFloat(totalRemainingGrams.toFixed(2));
-
-  //   // 5. Convert back to K P Y
-  //   const result = gramToKPY(totalRemainingGrams);
+  //   // Convert back to KPY format
+  //   const result = gramToKPY(totalRemainingGrams); // Ensure non-negative value
+  //   console.log("calculateRemainingGold result:", result);
   //   return result;
   // };
 
+  const calculateRemainingGold = () => {
+  const prev24K = convertPreviousBalanceTo24K?.() || {};
+  const gold24K = calculateTotalConvert24K?.() || {};
+
+  const prevGram =
+    typeof prev24K.gram === "number" ? prev24K.gram
+    : kpyToGram(prev24K.kyat || 0, prev24K.pae || 0, prev24K.yway || 0);
+
+  const goldGram =
+    typeof gold24K.gram === "number" ? gold24K.gram
+    : kpyToGram(gold24K.kyat || 0, gold24K.pae || 0, gold24K.yway || 0);
+
+  const totalPaymentsGrams = calculateTotalPaymentsInGrams() || 0;
+  const totalDiscountPaymentsGrams = calculateTotalDiscountPaymentsInGrams() || 0;
+
+  // keep full precision here
+  let totalRemainingGrams =
+    prevGram + goldGram - (totalPaymentsGrams - totalDiscountPaymentsGrams);
+
+  if (totalRemainingGrams < 0) totalRemainingGrams = 0;
+
+  // convert to K/P/Y using the *exact* grams (no early rounding)
+  const result = gramToKPY(totalRemainingGrams);
+
+  // show grams rounded only for display
+  result.gram = parseFloat(totalRemainingGrams.toFixed(2));
+
+  console.log("calculateRemainingGold result:", { result  },prev24K,gold24K,prevGram,goldGram,totalPaymentsGrams,totalDiscountPaymentsGrams,totalRemainingGrams);
+  
+
+  return result;
+};
+
+
+
+
+
   // Convert Previous Balance to 24K
-  const convertPreviousBalanceTo24K = () => {
-    // console.log("convertPreviousBalanceTo24K called");
-    if (!items || items.length === 0) {
-      // console.log("No items, returning zero");
-      return { kyat: 0, pae: 0, yway: 0, gram: 0 };
-    }
+ // New helper: accept fractional totalKyat value directly
+const convertKyatValueTo24K = (totalKyat, quality) => {
+  let converted = totalKyat;
+  if (quality === 18) converted = (totalKyat / 16) * 12;
+  else if (quality === 22) converted = (totalKyat / 17.5) * 16;
+  else if (quality === 23) converted = (totalKyat / 17) * 16;
+  // 24K is identity
+  return converted;
+};
 
-    // Get the quality of the previous balance (assuming it's from the first item)
-    const previousBalanceQuality = Number(items[0]?.remainingQuality) || 24;
-    // console.log("Previous balance quality:", previousBalanceQuality);
+// Replace convertPreviousBalanceTo24K with this:
+const convertPreviousBalanceTo24K = () => {
+  if (!items || items.length === 0) {
+    return { kyat: 0, pae: 0, yway: 0, gram: 0 };
+  }
 
-    // Convert Previous Balance to 24K
-    const convert24KValue = convertTo24K(
-      customerRemainingBalance.kyat,
-      customerRemainingBalance.pae,
-      customerRemainingBalance.yway,
-      previousBalanceQuality
-    );
+  const previousBalanceQuality = Number(items[0]?.remainingQuality) || 24;
 
-    const result = convertToKPY(convert24KValue);
-    // console.log("convertPreviousBalanceTo24K result:", result);
-    return result;
-  };
+  // Prefer stored gram if available (single source of truth)
+  const storedGram = Number(items[0]?.remainingGram);
+  let totalKyatValue;
+
+  if (!isNaN(storedGram) && storedGram > 0) {
+    // Use stored gram to compute the kyat value (so we preserve storedGram exactly)
+    totalKyatValue = storedGram / 16.6;
+  } else {
+    // Fallback: compute kyat value from kyat/pae/yway fields
+    totalKyatValue =
+      (Number(customerRemainingBalance.kyat) || 0) +
+      ((Number(customerRemainingBalance.pae) || 0) / 16) +
+      ((Number(customerRemainingBalance.yway) || 0) / 128);
+  }
+
+  // Convert that fractional kyat value to equivalent 24K kyat value
+  const converted24KValue = convertKyatValueTo24K(
+    totalKyatValue,
+    previousBalanceQuality
+  );
+
+  const result = convertToKPY(converted24KValue);
+
+  // If we used storedGram, force result.gram to match stored value (keeps exact 326.10)
+  if (!isNaN(storedGram) && storedGram > 0) {
+    result.gram = parseFloat(storedGram.toFixed(2));
+  } else {
+    // otherwise standard rounding to 2 decimals
+    result.gram = parseFloat(result.gram.toFixed(2));
+  }
+
+  return result;
+};
+
 
   // Calculate combined total (Previous Balance + Gold 24K) using proper addition
   // Calculate combined total (Previous Balance + Gold 24K) using proper addition
@@ -520,10 +552,10 @@ const POS = () => {
       gram: calculateTotalConvert24K().gram || 0,
     };
 
-    // console.log("Adding previous balance (24K) and gold 24K:", {
-    //   previousBalance,
-    //   gold24K,
-    // });
+    console.log("Adding previous balance (24K) and gold 24K:", {
+      previousBalance,
+      gold24K,
+    });
     // Add them properly using the addKPY function
     const result = addKPY(previousBalance, gold24K);
     // console.log("calculateCombinedTotal result:", result);
