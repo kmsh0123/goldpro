@@ -33,7 +33,7 @@ const Product = () => {
   const skip = (page - 1) * limit;
 
   // Fetch products
-  const { data: GetProducts } = useGetProductQuery({ limit, skip });
+  const { data: GetProducts } = useGetProductQuery();
   const [deleteProduct] = useDeleteProductMutation();
   console.log("GetProduct :",GetProducts);
   
@@ -116,6 +116,7 @@ const Product = () => {
           "Product Code",
           "Product Name",
           "Stock",
+          "Quality",
           "Weight(g)",
           "Actions",
         ]}
@@ -134,13 +135,14 @@ const Product = () => {
             <td>{item.product_code}</td>
             <td>{item.name}</td>
             <td>{item.stock}</td>
-            {/* {(item.shwe_chain_gram * item.stock).toFixed()} */}
+            <td>{item.quality_name}</td>
             <td>{item.shwe_chain_gram}</td>
             <td>
               <Button
                 variant="ghost"
                 size="icon"
                 className="text-yellow-600 hover:text-yellow-700"
+                onClick={() => navigate(`/inventory/product/update/${item.id}`)}
               >
                 <Pencil size={30} />
               </Button>

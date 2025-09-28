@@ -274,7 +274,7 @@ const CreateProduct = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="w-full">
+          {/* <div className="w-full">
             <label className="block mb-1 font-medium">Type</label>
             <Controller
               name="typeId"
@@ -369,7 +369,7 @@ const CreateProduct = () => {
                 </Popover>
               )}
             />
-          </div>
+          </div> */}
           <div className="w-full">
             <label className="block mb-1 font-medium">Category</label>
             <Controller

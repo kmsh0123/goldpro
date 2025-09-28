@@ -19,6 +19,12 @@ const initialState = {
     yway: "",
     gram: "",
   },
+  convert24: {
+    kyat: "",
+    pae: "",
+    yway: "",
+    gram: "",
+  },
   discount: {
     kyat: "",
     pae: "",
@@ -32,6 +38,7 @@ const initialState = {
   convert24KDetail: { kyat: 0, pae: 0, yway: 0, gram: 0 },
   items: [],
   payments: [],
+  convert24s:[],
   discountPayments: [],
 };
 
@@ -121,6 +128,11 @@ export const cartSlice = createSlice({
       state.payment = { ...state.payment, ...action.payload };
       console.log(state.payment);
     },
+
+    setConverto24K: (state, action) => {
+      state.convert24 = { ...state.convert24, ...action.payload };
+      console.log(state.convert24);
+    },
     
     
     setDiscount: (state, action) => {
@@ -156,6 +168,10 @@ export const cartSlice = createSlice({
       state.payments.push({ ...action.payload });
     },
 
+    add24KConvert: (state, action) => {
+      state.convert24s.push({ ...action.payload });
+    },
+
     removePayment: (state, action) => {
      state.items.splice(action.payload, 1)
     },
@@ -185,6 +201,14 @@ export const cartSlice = createSlice({
     
     resetpayment: (state) => {
       state.payment = { kyat: "", pae: "", yway: "", gram: "" };
+    },
+
+    resetconvert24: (state) => {
+      state.convert24s = [];
+    },
+
+    resetconvert24K: (state) => {
+      state.convert24 = { kyat: "", pae: "", yway: "", gram: "" };
     },
     
     resetDiscount: (state) => {
@@ -234,16 +258,20 @@ export const {
   setCash,
   setDiscountCash,
   setpayment,
+  setConverto24K,
   setDiscount,
   clearCart,
   resetGoldWeight,
   resetpayment,
+  resetconvert24K,
+  resetconvert24,
   resetDiscount,
   addDiscountPayment,
   removeDiscountPayment,
   resetDiscountPayments,
   // updateDiscountPayment,
   addPayment,
+  add24KConvert,
   removePayment,
   resetPayments,
   resetAlyutWeight,

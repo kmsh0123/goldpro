@@ -31,7 +31,7 @@ const ProductDetailPage = () => {
         {/* Image */}
         <Card className="overflow-hidden">
           <img
-            src={data?.data?.image}
+            src={data?.data?.image ? `http://localhost:8000/image/${data.data.image}` : "Not Found Image"}
             alt="headphones"
             className="w-full h-[350px] object-cover"
           />

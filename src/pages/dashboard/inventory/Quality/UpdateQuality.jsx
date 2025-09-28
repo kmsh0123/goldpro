@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/select";
 import { useNavigate, useParams } from "react-router-dom";
 import { ChevronLeftIcon } from "lucide-react";
-import { useCreateQualityMutation, useUpdateQualityMutation } from "@/feature/api/inventory/qualityApi";
+import { useCreateQualityMutation, useGetDetailQualityQuery, useUpdateQualityMutation } from "@/feature/api/inventory/qualityApi";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import { useGetTypeQuery } from "@/feature/api/inventory/typeApi";
@@ -34,7 +34,10 @@ const UpdateQuality = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [open, setOpen] = useState(false);
   const {id} = useParams();
+   const { data: qualityData, isLoading } = useGetDetailQualityQuery(id);
 
+  console.log(qualityData);
+  
   const {
     register,
     handleSubmit,
@@ -61,6 +64,15 @@ const UpdateQuality = () => {
   const filteredProducts = GetProducts?.data?.filter((item) =>
     item.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  useEffect(() => {
+    if (qualityData) {
+      reset({
+        name: qualityData?.data?.name,
+        typeId: qualityData?.data?.type_id?.toString() || "",
+      });
+    }
+  }, [qualityData, reset]);
 
   const handleUpdateQuality = async (formData) => {
     try {

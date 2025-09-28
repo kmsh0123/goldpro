@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -10,33 +10,46 @@ import {
 } from "@/components/ui/select";
 import { useNavigate, useParams } from "react-router-dom";
 import { ChevronLeftIcon } from "lucide-react";
-import { useCreateTypeMutation, useUpdateTypeMutation } from "@/feature/api/inventory/typeApi";
+import {
+  useCreateTypeMutation,
+  useGetDetailTypeQuery,
+  useUpdateTypeMutation,
+} from "@/feature/api/inventory/typeApi";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 
 const UpdateType = () => {
   const nav = useNavigate();
   const [typeUpdate] = useUpdateTypeMutation();
-  const {id} = useParams();
+  const { id } = useParams();
+  const { data } = useGetDetailTypeQuery(id);
 
   const {
-        register,
-        handleSubmit,
-        reset,
-        formState: { errors },
-      } = useForm();
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm();
 
-const handleCreateType = async (formData) => {
-  try {
-    const {data} = await typeUpdate({formData,id});
-    console.log("Type created successfully:", data);
-    toast.success("Type created successfully!");
-    reset();
-    nav("/inventory/type");
-  } catch (error) {
-    console.error("Error create type");
-  } 
-}
+  useEffect(() => {
+    if (data?.data) {
+      reset({
+        name: data?.data?.name,
+      });
+    }
+  }, [data, reset]);
+
+  const handleCreateType = async (formData) => {
+    try {
+      const { data } = await typeUpdate({ formData, id });
+      console.log("Type created successfully:", data);
+      toast.success("Type created successfully!");
+      reset();
+      nav("/inventory/type");
+    } catch (error) {
+      console.error("Error create type");
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -50,14 +63,15 @@ const handleCreateType = async (formData) => {
 
       <div className="border-b-2"></div>
 
-      <form onSubmit={handleSubmit(handleCreateType)} className="space-y-6 max-w-xs">
-
+      <form
+        onSubmit={handleSubmit(handleCreateType)}
+        className="space-y-6 max-w-xs"
+      >
         <div>
           <label className="block mb-1 font-medium">Name</label>
           <Input
             placeholder="Enter Name"
-            {...register("name")} 
-            // value={name}
+            {...register("name")}
             // onChange={(e) => setName(e.target.value)}
             className="bg-gray-100"
           />

@@ -16,6 +16,13 @@ export const qualityApi = createApi({
       }),
       providesTags: ["qualityApi"],
     }),
+    getDetailQuality: builder.query({
+      query: (id) => ({
+        url: `quality/details/${id}`,
+        method: "GET",
+      }),
+      providesTags: ["qualityApi"],
+    }),
     createQuality: builder.mutation({
       query: (formData) => ({
         url: "quality/create",
@@ -55,5 +62,6 @@ export const {
   useGetQualityQuery,
   useCreateQualityMutation,
   useUpdateQualityMutation,
-  useDeleteQualityMutation
+  useDeleteQualityMutation,
+  useGetDetailQualityQuery
 } = qualityApi;

@@ -36,6 +36,7 @@ import UpdateCategory from "@/pages/dashboard/inventory/Category/UpdateCategory.
 import path from "path";
 import ProductDetailPage from "@/pages/dashboard/inventory/Product/ProductDetail.jsx";
 import SaleListDetail from "@/pages/dashboard/sale/Customer/SaleListDetail.jsx";
+import UpdateProduct from "@/pages/dashboard/inventory/Product/UpdateProduct.jsx";
 
 const dashboardRoute = [
   {
@@ -99,6 +100,10 @@ const dashboardRoute = [
       {
         path: "/inventory/product/detail/:id",
         element: <ProductDetailPage/>,
+      },
+      {
+        path: "/inventory/product/update/:id",
+        element: <UpdateProduct/>,
       },
       // Inventory
 

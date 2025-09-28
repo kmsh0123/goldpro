@@ -16,6 +16,14 @@ export const typeApi = createApi({
       }),
       providesTags: ["typeApi"],
     }),
+    getDetailType: builder.query({
+      query: (id) => ({
+        // url: `/type/list?page=${page}`,
+        url: `/type/details/${id}`,
+        method: "GET",
+      }),
+      providesTags: ["typeApi"],
+    }),
     createType: builder.mutation({
       query: (formData) => ({
         url: "type/create",
@@ -52,5 +60,5 @@ export const typeApi = createApi({
   }),
 });
 
-export const {useGetTypeQuery,useCreateTypeMutation,useUpdateTypeMutation,useDeleteTypeMutation} = typeApi;
+export const {useGetTypeQuery,useCreateTypeMutation,useUpdateTypeMutation,useDeleteTypeMutation,useGetDetailTypeQuery} = typeApi;
 

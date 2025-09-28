@@ -21,7 +21,7 @@ const MySwal = withReactContent(Swal);
 
 const Type = () => {
   // const [searchParams] = useSearchParams();
-  // const nav = useNavigate();
+  const nav = useNavigate();
 
   // // RTK mutations
   // const [deleteType] = useDeleteTypeMutation();

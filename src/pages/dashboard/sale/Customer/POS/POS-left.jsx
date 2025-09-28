@@ -36,6 +36,9 @@ import {
   setDiscount,
   addDiscountPayment,
   setDiscountCash,
+  setConverto24K,
+  add24KConvert,
+  resetconvert24K,
 } from "@/feature/service/cartSlice";
 import { useGetCustomerQuery } from "@/feature/api/saleApi/customerApi";
 import { Controller, useForm } from "react-hook-form";
@@ -82,12 +85,21 @@ const POSLeft = () => {
     gram: alyautGram,
   } = useSelector((state) => state.cart.alyut);
 
+  
+
   const {
     kyat: payKyat,
     pae: payPae,
     yway: payYway,
     gram: payGram,
   } = useSelector((state) => state.cart.payment);
+
+   const {
+    kyat: convert24Kyat,
+    pae: convert24Pae,
+    yway: convert24Yway,
+    gram: convert24Gram,
+  } = useSelector((state) => state.cart.convert24);
 
   const {
     kyat: discountKyat,
@@ -197,26 +209,36 @@ const POSLeft = () => {
   );
 
   const kyatPaeYwayToGram = (kyat, pae, yway) => {
-    const totalKyat =
-      (parseFloat(kyat) || 0) +
-      (parseFloat(pae) || 0) / 16 +
-      (parseFloat(yway) || 0) / 128;
-    return (totalKyat * 16.6).toFixed(2);
-  };
+  const totalKyat =
+    (parseFloat(kyat) || 0) +
+    (parseFloat(pae) || 0) / 16 +
+    (parseFloat(yway) || 0) / 128;
+  return totalKyat * 16.6; // Round grams to integer
+};
 
-  const gramToKyatPaeYway = (gram) => {
-    const kyatValue = gram / 16.6;
-    const kyat = Math.floor(kyatValue);
+// const gramToKyatPaeYway = (gram) => {
+//   let totalKyat = gram / 16.6;
 
-    const paeValue = (kyatValue - kyat) * 16;
-    const pae = Math.floor(paeValue);
+//   const kyat = Math.floor(totalKyat);
+//   totalKyat -= kyat;
 
-    const ywayValue = (paeValue - pae) * 8;
-    const yway = Math.floor(ywayValue);
+//   const pae = Math.floor(totalKyat * 16);
+//   const yway = Math.floor((totalKyat * 16 - pae) * 8);
 
-    return { kyat, pae, yway };
-  };
+//   return { kyat, pae, yway };
+// }
 
+const gramToKyatPaeYway = (gram) => {
+  let totalKyat = gram / 16.6;
+
+  const kyat = Math.floor(totalKyat);
+  totalKyat -= kyat;
+
+  const pae = Math.floor(totalKyat * 16);
+  const yway = (totalKyat * 16 - pae) * 8; // keep decimal for yway
+
+  return { kyat, pae, yway: parseFloat(yway.toFixed(2)) };
+};
   const handleChange = (field, value) => {
     let newValue = value;
 
@@ -237,14 +259,14 @@ const POSLeft = () => {
 
   const handleAlyautChange = (field, value) => {
     if (field === "gram") {
-      const { kyat, pae, yway } = gramToKyatPaeYway(parseFloat(value) || 0);
+      const { kyat, pae, yway } = gramToKyatPaeYway(parseFloat(value) || 0);      
       dispatch(setAlyut({ kyat, pae, yway, gram: value }));
     } else {
       const newState = {
         kyat: alyautKyat,
         pae: alyautPae,
         yway: alyautYway,
-        gram: alyautGram,
+        gram: alyautGram
       };
       newState[field] = value;
       const newGram = kyatPaeYwayToGram(
@@ -252,7 +274,7 @@ const POSLeft = () => {
         newState.pae,
         newState.yway
       );
-      dispatch(setAlyut({ ...newState, gram: newGram }));
+      dispatch(setAlyut({ ...newState, gram: newGram }));      
     }
   };
 
@@ -274,6 +296,27 @@ const POSLeft = () => {
         newState.yway
       );
       dispatch(setpayment({ ...newState, gram: newGram }));
+    }
+  };
+
+   const handleConvert24Change = (field, value) => {
+    if (field === "gram") {
+      const { kyat, pae, yway } = gramToKyatPaeYway(parseFloat(value) || 0);
+      dispatch(setConverto24K({ kyat, pae, yway, gram: value }));
+    } else {
+      const newState = {
+        kyat: convert24Kyat,
+        pae: convert24Pae,
+        yway: convert24Yway,
+        gram: convert24Gram,
+      };
+      newState[field] = value;
+      const newGram = kyatPaeYwayToGram(
+        newState.kyat,
+        newState.pae,
+        newState.yway
+      );
+      dispatch(setConverto24K({ ...newState, gram: newGram }));
     }
   };
 
@@ -355,6 +398,11 @@ const POSLeft = () => {
       discountYway: Number(discountYway) || 0,
       discountGram: Number(discountGram) || 0,
       discountCash: Number(discountcash) || 0,
+
+      Convert24KKyat: Number(convert24Kyat) || 0,
+      Convert24KPae: Number(convert24Pae) || 0,
+      Convert24KYway: Number(convert24Yway) || 0,
+      Convert24KGram: Number(convert24Gram) || 0,
       
       laathk: parseFloat(laathk) || 0,
     };
@@ -382,6 +430,19 @@ const POSLeft = () => {
     );
     // Reset payment fields
     dispatch(resetpayment());
+  };
+
+   const handleConvert24 = () => {
+    dispatch(
+      add24KConvert({
+        kyat: convert24Kyat,
+        pae: convert24Pae,
+        yway: convert24Yway,
+        gram: convert24Gram,
+      })
+    );
+    // Reset payment fields
+    dispatch(resetconvert24K());
   };
 
   const handleDiscountPayment = () => {
@@ -412,6 +473,10 @@ const POSLeft = () => {
   // Reset functions for better UX
   const resetPaymentFields = () => {
     dispatch(resetpayment());
+  };
+
+  const resetconvert = () => {
+    dispatch(resetconvert24K());
   };
 
   const resetDiscountFields = () => {
@@ -717,13 +782,13 @@ const POSLeft = () => {
           <div className="flex gap-2">
             <Input
               placeholder="K"
-              value={alyautKyat}
+              value={Math.floor(alyautKyat)}
               onChange={(e) => handleAlyautChange("kyat", e.target.value)}
               className="w-16 bg-gray-100"
             />
             <Input
               placeholder="P"
-              value={alyautPae}
+              value={Math.floor(alyautPae)}
               onChange={(e) => handleAlyautChange("pae", e.target.value)}
               className="w-16 bg-gray-100"
             />
@@ -781,6 +846,8 @@ const POSLeft = () => {
         </div>
       </div>
 
+      
+
       {/* လက်ခ */}
       <div className="w-1/2">
         <label className="block mb-1 font-medium">လက်ခ</label>
@@ -817,51 +884,6 @@ const POSLeft = () => {
       <div className="mt-6">
         <div className="flex justify-between items-center">
           <h3 className="font-bold text-sm w-96">Payment</h3>
-          {/* <Controller
-            name="qualityId"
-            control={control}
-            render={({ field }) => (
-              <Popover open={openQualityTwo} onOpenChange={setOpenQualityTwo}>
-                <PopoverTrigger asChild>
-                  <div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      role="combobox"
-                      className="w-full justify-between"
-                    >
-                      {selectedQualityNameTwo || "Select Quality"}
-                    </Button>
-                  </div>
-                </PopoverTrigger>
-                <PopoverContent className="w-80 p-0">
-                  <Command>
-                    <CommandInput
-                      placeholder="Search quality..."
-                      value={searchQualityTwo}
-                      onValueChange={setSearchQualityTwo}
-                    />
-                    <CommandList className="max-h-40 overflow-y-auto">
-                      <CommandEmpty>No results found.</CommandEmpty>
-                      <CommandGroup>
-                        {filteredQualityTwo?.map((item) => (
-                          <CommandItem
-                            key={item.id}
-                            onSelect={() => {
-                              field.onChange(item.id.toString());
-                              setOpenQualityTwo(false);
-                            }}
-                          >
-                            {item.name}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-            )}
-          /> */}
         </div>
         <div className="grid grid-cols-2 gap-4 mt-2">
           <div>
@@ -915,7 +937,61 @@ const POSLeft = () => {
               </Button>
             </div>
           </div>
+
+            <div>
+            <p className="text-sm mb-1">Converto 24K</p>
+            <div className="flex gap-2 mb-2">
+              <Input
+                placeholder="K"
+                value={convert24Kyat}
+                onChange={(e) => handleConvert24Change("kyat", e.target.value)}
+                className="w-16 bg-gray-100"
+              />
+              <Input
+                placeholder="P"
+                value={convert24Pae}
+                onChange={(e) => handleConvert24Change("pae", e.target.value)}
+                className="w-16 bg-gray-100"
+              />
+              <Input
+                placeholder="Y"
+                value={convert24Yway}
+                onChange={(e) => handleConvert24Change("yway", e.target.value)}
+                className="w-16 bg-gray-100"
+              />
+              <Input
+                placeholder="G"
+                value={convert24Gram}
+                onChange={(e) => handleConvert24Change("gram", e.target.value)}
+                className="w-16 bg-gray-100"
+              />
+            </div>
+            {/* <p className="text-sm mb-1">Cash</p>
+            <Input
+              placeholder="ငွေပမာဏ"
+              value={cash}
+              onChange={(e) => handleCashChange(e.target.value)}
+              className="w-full bg-gray-100"
+            /> */}
+            <div className="flex gap-2 mt-2">
+              <Button
+                variant="outline"
+                className="bg-gray-100 text-gray-700"
+                onClick={resetconvert}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleConvert24}
+                className="bg-yellow-600 hover:bg-yellow-700 text-white"
+              >
+                Add Payment
+              </Button>
+            </div>
+          </div>
         </div>
+
+    
         {/* Discount Section */}
         <div className="grid grid-cols-2 gap-4 mt-6">
           <div className="mt-6">

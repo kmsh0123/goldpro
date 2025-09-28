@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -19,7 +19,7 @@ import { ChevronLeftIcon } from "lucide-react";
 import { Controller, useForm } from "react-hook-form";
 import { useGetTypeQuery } from "@/feature/api/inventory/typeApi";
 import { useGetQualityQuery } from "@/feature/api/inventory/qualityApi";
-import { useUpdateCategoryMutation } from "@/feature/api/inventory/categoryApi";
+import { useGetDetailCategoryQuery, useUpdateCategoryMutation } from "@/feature/api/inventory/categoryApi";
 import { toast } from "react-toastify";
 
 const UpdateCategory = () => {
@@ -33,6 +33,11 @@ const UpdateCategory = () => {
   // Quality select state
   const [openQuality, setOpenQuality] = useState(false);
   const [searchQuality, setSearchQuality] = useState("");
+
+  const {data : CategoryData, isLoading} = useGetDetailCategoryQuery(id);
+
+  console.log(CategoryData);
+  
 
   const nav = useNavigate();
 
@@ -65,6 +70,17 @@ const UpdateCategory = () => {
   const selectedQualityName =
     GetQuality?.data?.find((item) => item.id.toString() === selectedQualityId)
       ?.name || "";
+
+  useEffect(() => {
+      if (CategoryData) {
+        reset({
+          name: CategoryData?.data?.name,
+          typeId: CategoryData?.data?.type_id?.toString() || "",
+          qualityId: CategoryData?.data?.quality_id?.toString() || "",
+          code: CategoryData?.data?.code
+        });
+      }
+    }, [CategoryData, reset]);
 
   const handleUpdateCategory = async (formData) => {
     try {
