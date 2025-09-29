@@ -1027,8 +1027,8 @@ const POS = () => {
   const handleDownloadPdf = async () => {
     try {
     const ok = await handleConfirmOrder();
-    if (!ok){
-      alert("Order confirm fail!");
+    if (ok){
+      // alert("Order confirm fail!");
       return;
     } 
     const element = printRef.current;
