@@ -18,7 +18,7 @@ import {
   selectCartTotals,
   updateConvert24K,
 } from "@/feature/service/cartSlice";
-import html2canvas from 'html2canvas-pro';
+import html2canvas from "html2canvas-pro";
 import jsPDF from "jspdf";
 
 // Helper function to normalize KPY values (handle carry-over)
@@ -143,9 +143,6 @@ const POS = () => {
   const printRef = useRef(null);
   const [createOrder, { isLoading }] = useCreateOrderMutation();
   const dispatch = useDispatch();
-
-
-
 
   const {
     items,
@@ -292,7 +289,7 @@ const POS = () => {
   };
 
   // Calculate sum of all convertTo24K detail results
-  
+
   // Calculate total payments in grams
   const calculateTotalPaymentsInGrams = () => {
     // console.log("calculateTotalPaymentsInGrams called");
@@ -500,11 +497,11 @@ const POS = () => {
 
     // convert to K/P/Y using the precise gramToKPY (which rounds to nearest yway)
     const result = {
-    kyat,
-    pae,
-    yway,
-    gram: parseFloat(totalRemainingGrams.toFixed(3)),
-  };
+      kyat,
+      pae,
+      yway,
+      gram: parseFloat(totalRemainingGrams.toFixed(3)),
+    };
 
     // show grams rounded only for display
     // result.gram = parseFloat(totalRemainingGrams.toFixed(2));
@@ -531,7 +528,6 @@ const POS = () => {
     // 24K is identity
     return converted;
   };
-
 
   const convertPreviousBalanceTo24K = () => {
     // console.log("convertPreviousBalanceTo24K called");
@@ -720,8 +716,6 @@ const POS = () => {
     dispatch(updateConvert24K());
   }, [items, dispatch]);
 
-
-
   const calculateItemTotals = (item) => {
     // console.log("calculateItemTotals called for item:", item);
     const qty = Number(item.qty || 1);
@@ -884,59 +878,59 @@ const POS = () => {
   // };
 
   const calculateTotalCash = () => {
-  if (!items || items.length === 0) return 0;
+    if (!items || items.length === 0) return 0;
 
-  const baseTotalCash = items.reduce((sum, item) => {
-    const qty = Number(item.qty || 1);
+    const baseTotalCash = items.reduce((sum, item) => {
+      const qty = Number(item.qty || 1);
 
-    // alyot values
-    const rawAlyotKyat = Number(item.alyautKyat || 0) * qty;
-    const rawAlyotPae  = Number(item.alyautPae  || 0) * qty;
-    const rawAlyotYway = Number(item.alyautYway || 0) * qty;
+      // alyot values
+      const rawAlyotKyat = Number(item.alyautKyat || 0) * qty;
+      const rawAlyotPae = Number(item.alyautPae || 0) * qty;
+      const rawAlyotYway = Number(item.alyautYway || 0) * qty;
 
-    const alyotKPY = normalizeKPY(rawAlyotKyat, rawAlyotPae, rawAlyotYway);
+      const alyotKPY = normalizeKPY(rawAlyotKyat, rawAlyotPae, rawAlyotYway);
 
-    // shwe values
-    const shweKyat = Number(item.kyat  || 0);
-    const shwePae  = Number(item.pae   || 0);
-    const shweYway = Number(item.yway  || 0);
+      // shwe values
+      const shweKyat = Number(item.kyat || 0);
+      const shwePae = Number(item.pae || 0);
+      const shweYway = Number(item.yway || 0);
 
-    const roundedShweYway = roundYwayAndCarry(shweYway);
+      const roundedShweYway = roundYwayAndCarry(shweYway);
 
-    const shweKPY = normalizeKPY(
-      shweKyat,
-      shwePae + (roundedShweYway?.carryPae || 0),
-      roundedShweYway?.yway || 0
-    );
+      const shweKPY = normalizeKPY(
+        shweKyat,
+        shwePae + (roundedShweYway?.carryPae || 0),
+        roundedShweYway?.yway || 0
+      );
 
-    // net weight for **this** item
-    const netKPY = normalizeKPY(
-      shweKPY.kyat + alyotKPY.kyat,
-      shweKPY.pae  + alyotKPY.pae,
-      shweKPY.yway + alyotKPY.yway
-    );
+      // net weight for **this** item
+      const netKPY = normalizeKPY(
+        shweKPY.kyat + alyotKPY.kyat,
+        shweKPY.pae + alyotKPY.pae,
+        shweKPY.yway + alyotKPY.yway
+      );
 
-    const netGram = kpyToGram(netKPY.kyat, netKPY.pae, netKPY.yway);
+      const netGram = kpyToGram(netKPY.kyat, netKPY.pae, netKPY.yway);
 
-     const totalKyatValue = convertTo24K(
-      netKPY.kyat, netKPY.pae, netKPY.yway,
-      Number(item.karat || 24)
-     )
+      const totalKyatValue = convertTo24K(
+        netKPY.kyat,
+        netKPY.pae,
+        netKPY.yway,
+        Number(item.karat || 24)
+      );
       // netKPY.kyat + netKPY.pae / 16 + netKPY.yway / 128;
 
+      const todayRate = Number(item.todayRate || 0);
+      // const itemTotal = netGram * todayRate;
+      const itemTotal = totalKyatValue * todayRate;
+      console.log("itemTotal:", itemTotal);
+      console.log("netGram:", netGram);
 
-    const todayRate = Number(item.todayRate || 0);
-    // const itemTotal = netGram * todayRate;
-const itemTotal = totalKyatValue * todayRate;
-    console.log("itemTotal:",itemTotal);
-    console.log("netGram:",netGram);
-    
+      return sum + itemTotal;
+    }, 0);
 
-    return sum + itemTotal;
-  }, 0);
-
-  // discount
-  let totalDiscountCash = 0;
+    // discount
+    let totalDiscountCash = 0;
     if (discountPayments && discountPayments.length > 0) {
       totalDiscountCash = discountPayments.reduce((sum, discount) => {
         const discountCash = Number(discount?.discountCash) || 0;
@@ -957,8 +951,7 @@ const itemTotal = totalKyatValue * todayRate;
     // });
 
     return finalTotalCash;
-};
-
+  };
 
   // Get todayRate from items
   const getTodayRate = () => {
@@ -1033,7 +1026,7 @@ const itemTotal = totalKyatValue * todayRate;
 
   const handleDownloadPdf = async () => {
     const ok = await handleConfirmOrder();
-    if (ok) return;
+    if (!ok) return;
     const element = printRef.current;
     if (!element) {
       return;
@@ -1041,6 +1034,8 @@ const itemTotal = totalKyatValue * todayRate;
 
     const canvas = await html2canvas(element, {
       scale: 2,
+      useCORS: true,
+      ignoreElements: (el) => el.classList.contains("hide-on-pdf"),
     });
     const data = canvas.toDataURL("image/png");
 
@@ -1060,7 +1055,7 @@ const itemTotal = totalKyatValue * todayRate;
   };
 
   return (
-    <div  className="p-6 space-y-6">
+    <div className="p-6 space-y-6">
       {/* Header */}
       <h1 className="flex items-center gap-2 text-xl font-semibold text-yellow-600 mt-5 mb-5">
         <span onClick={() => window.history.back()} className="cursor-pointer">
@@ -1076,10 +1071,9 @@ const itemTotal = totalKyatValue * todayRate;
         <POSLeft />
 
         {/* Right Side - Invoice */}
-        <div ref={printRef}>
-          <Card  className="p-4">
+        <Card className="p-4 fixed top-0 right-0 bottom-0" ref={printRef}>
           {/* Invoice Info */}
-          <div  className="text-sm space-y-1 mb-4">
+          <div className="text-sm space-y-1 mb-4">
             <p>Voucher Code: {items[0]?.voucherCode || ""}</p>
             <p>Customer Name: {items[0]?.customerName || ""}</p>
             <p>Today Gold Rate: {items[0]?.todayRate || 0} Kyats</p>
@@ -1629,14 +1623,11 @@ const itemTotal = totalKyatValue * todayRate;
               </tfoot>
             </table>
           </div>
-        </Card>
-
-
           {/* Footer Buttons */}
           <div className="flex justify-end gap-4 mt-6">
             <Button
               variant="outline"
-              className="bg-gray-100 text-gray-700"
+              className="bg-gray-100 text-gray-700 hide-on-pdf"
               onClick={() => window.history.back()}
             >
               Cancel
@@ -1644,21 +1635,20 @@ const itemTotal = totalKyatValue * todayRate;
             <Button
               onClick={handleConfirmOrder}
               disabled={isLoading || !items || items.length === 0}
-              className="bg-yellow-600 hover:bg-yellow-700 text-white"
+              className="bg-yellow-600 hover:bg-yellow-700 text-white hide-on-pdf"
             >
               {isLoading ? "Saving..." : "Save"}
             </Button>
-            
-             <Button
+
+            <Button
               onClick={handleDownloadPdf}
-              // disabled={isLoading || !items || items.length === 0}
-              className="bg-green-900 hover:bg-green-800 text-white"
+              disabled={isLoading || !items || items.length === 0}
+              className="bg-green-900 hover:bg-green-800 text-white hide-on-pdf"
             >
               {isLoading ? "Saving PDF..." : "Save & PDF"}
             </Button>
-            
           </div>
-        </div>
+        </Card>
       </div>
     </div>
   );

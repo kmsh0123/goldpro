@@ -938,7 +938,10 @@ const gramToKyatPaeYway = (gram) => {
             </div>
           </div>
 
-            <div>
+           
+        </div>
+
+         <div className="my-10">
             <p className="text-sm mb-1">Converto 24K</p>
             <div className="flex gap-2 mb-2">
               <Input
@@ -989,7 +992,6 @@ const gramToKyatPaeYway = (gram) => {
               </Button>
             </div>
           </div>
-        </div>
 
     
         {/* Discount Section */}
