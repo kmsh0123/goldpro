@@ -1033,7 +1033,7 @@ const itemTotal = totalKyatValue * todayRate;
 
   const handleDownloadPdf = async () => {
     const ok = await handleConfirmOrder();
-    if (!ok) return;
+    if (ok) return;
     const element = printRef.current;
     if (!element) {
       return;
