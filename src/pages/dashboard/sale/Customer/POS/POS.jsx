@@ -1025,8 +1025,12 @@ const POS = () => {
   };
 
   const handleDownloadPdf = async () => {
+    try {
     const ok = await handleConfirmOrder();
-    if (!ok) return;
+    if (!ok){
+      alert("Order confirm fail!");
+      return;
+    } 
     const element = printRef.current;
     if (!element) {
       return;
@@ -1052,6 +1056,10 @@ const POS = () => {
 
     pdf.addImage(data, "PNG", 0, 0, pdfWidth, pdfHeight);
     pdf.save("examplepdf.pdf");
+     alert("Order confirm success! PDF downloaded.");
+    } catch (error) {
+       alert("Something went wrong while generating PDF.");
+    }
   };
 
   return (
