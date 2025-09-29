@@ -1,4 +1,4 @@
-import React, { Fragment, useEffect, useState } from "react";
+import React, { Fragment, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ChevronLeftIcon } from "lucide-react";
@@ -18,6 +18,8 @@ import {
   selectCartTotals,
   updateConvert24K,
 } from "@/feature/service/cartSlice";
+import html2canvas from 'html2canvas-pro';
+import jsPDF from "jspdf";
 
 // Helper function to normalize KPY values (handle carry-over)
 const normalizeKPY = (kyat, pae, yway) => {
@@ -138,8 +140,12 @@ const roundYwayAndCarry = (ywayFloat) => {
 };
 
 const POS = () => {
+  const printRef = useRef(null);
   const [createOrder, { isLoading }] = useCreateOrderMutation();
   const dispatch = useDispatch();
+
+
+
 
   const {
     items,
@@ -1025,8 +1031,36 @@ const itemTotal = totalKyatValue * todayRate;
     return result;
   };
 
+  const handleDownloadPdf = async () => {
+    const ok = await handleConfirmOrder();
+    if (!ok) return;
+    const element = printRef.current;
+    if (!element) {
+      return;
+    }
+
+    const canvas = await html2canvas(element, {
+      scale: 2,
+    });
+    const data = canvas.toDataURL("image/png");
+
+    const pdf = new jsPDF({
+      orientation: "portrait",
+      unit: "px",
+      format: "a4",
+    });
+
+    const imgProperties = pdf.getImageProperties(data);
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+
+    const pdfHeight = (imgProperties.height * pdfWidth) / imgProperties.width;
+
+    pdf.addImage(data, "PNG", 0, 0, pdfWidth, pdfHeight);
+    pdf.save("examplepdf.pdf");
+  };
+
   return (
-    <div className="p-6 space-y-6">
+    <div  className="p-6 space-y-6">
       {/* Header */}
       <h1 className="flex items-center gap-2 text-xl font-semibold text-yellow-600 mt-5 mb-5">
         <span onClick={() => window.history.back()} className="cursor-pointer">
@@ -1042,9 +1076,10 @@ const itemTotal = totalKyatValue * todayRate;
         <POSLeft />
 
         {/* Right Side - Invoice */}
-        <Card className="p-4">
+        <div ref={printRef}>
+          <Card  className="p-4">
           {/* Invoice Info */}
-          <div className="text-sm space-y-1 mb-4">
+          <div  className="text-sm space-y-1 mb-4">
             <p>Voucher Code: {items[0]?.voucherCode || ""}</p>
             <p>Customer Name: {items[0]?.customerName || ""}</p>
             <p>Today Gold Rate: {items[0]?.todayRate || 0} Kyats</p>
@@ -1594,6 +1629,8 @@ const itemTotal = totalKyatValue * todayRate;
               </tfoot>
             </table>
           </div>
+        </Card>
+
 
           {/* Footer Buttons */}
           <div className="flex justify-end gap-4 mt-6">
@@ -1611,8 +1648,17 @@ const itemTotal = totalKyatValue * todayRate;
             >
               {isLoading ? "Saving..." : "Save"}
             </Button>
+            
+             <Button
+              onClick={handleDownloadPdf}
+              // disabled={isLoading || !items || items.length === 0}
+              className="bg-green-900 hover:bg-green-800 text-white"
+            >
+              {isLoading ? "Saving PDF..." : "Save & PDF"}
+            </Button>
+            
           </div>
-        </Card>
+        </div>
       </div>
     </div>
   );
