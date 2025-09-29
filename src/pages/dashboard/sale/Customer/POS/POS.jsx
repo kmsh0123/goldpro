@@ -1026,7 +1026,7 @@ const POS = () => {
 
   const handleDownloadPdf = async () => {
     try {
-    const ok  =  handleConfirmOrder();
+    const ok  = await handleConfirmOrder();
     if (ok){
       // alert("Order confirm fail!");
       return;
@@ -1036,7 +1036,7 @@ const POS = () => {
       return;
     }
 
-    const canvas = await html2canvas(element, {
+    const canvas =  html2canvas(element, {
       scale: 2,
       useCORS: true,
       ignoreElements: (el) => el.classList.contains("hide-on-pdf"),
