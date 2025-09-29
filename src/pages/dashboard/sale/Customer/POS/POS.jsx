@@ -688,7 +688,6 @@ const POS = () => {
       const result = await createOrder(payload).unwrap();
       // console.log("Order created successfully:", result);
       alert("Order created successfully!");
-      dispatch(clearCart());
     } catch (error) {
       console.error("Order creation failed:", error);
       alert("Order failed: " + (error.message || "Unknown error"));
@@ -1026,7 +1025,7 @@ const POS = () => {
 
   const handleDownloadPdf = async () => {
     try {
-    const ok  = await handleConfirmOrder();
+    const ok = await handleConfirmOrder();
     if (ok){
       // alert("Order confirm fail!");
       return;
@@ -1036,7 +1035,7 @@ const POS = () => {
       return;
     }
 
-    const canvas =  html2canvas(element, {
+    const canvas = await html2canvas(element, {
       scale: 2,
       useCORS: true,
       ignoreElements: (el) => el.classList.contains("hide-on-pdf"),
@@ -1057,6 +1056,7 @@ const POS = () => {
     pdf.addImage(data, "PNG", 0, 0, pdfWidth, pdfHeight);
     pdf.save("examplepdf.pdf");
      alert("Order confirm success! PDF downloaded.");
+      dispatch(clearCart());
     } catch (error) {
        alert("Something went wrong while generating PDF.");
     }
