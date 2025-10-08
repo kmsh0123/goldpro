@@ -19,17 +19,12 @@ import SupplierList from "@/pages/dashboard/purchase/SupplierList.jsx";
 import DailyReport from "@/pages/dashboard/reports/DailyReport.jsx";
 import ProfitLossReport from "@/pages/dashboard/reports/ProfitLossReport.jsx";
 import ExpenseReport from "@/pages/dashboard/reports/ExpenseReport.jsx";
-import COA from "@/pages/dashboard/coa/COA.jsx";
 import CreateType from "@/pages/dashboard/inventory/Type/CreateType.jsx";
 import CreateQuality from "@/pages/dashboard/inventory/Quality/CreateQuality.jsx";
 import CreateCategory from "@/pages/dashboard/inventory/Category/CreateCategory.jsx";
 import CreateProduct from "@/pages/dashboard/inventory/Product/CreateProduct.jsx";
 import Stock from "@/pages/dashboard/stock/Stock.jsx";
 import CreateCustomer from "@/pages/dashboard/sale/Customer/CreateCustomer.jsx";
-import CreateCOA from "@/pages/dashboard/coa/CreateCOA.jsx";
-import COADetail from "@/pages/dashboard/coa/coa_detail/COA-detail.jsx";
-import CreateCOADetail from "@/pages/dashboard/coa/coa_detail/CreateCOA-detail.jsx";
-import EditCOA from "@/pages/dashboard/coa/EditCOA.jsx";
 import UpdateType from "@/pages/dashboard/inventory/Type/UpdateType.jsx";
 import UpdateQuality from "@/pages/dashboard/inventory/Quality/UpdateQuality.jsx";
 import UpdateCategory from "@/pages/dashboard/inventory/Category/UpdateCategory.jsx";
@@ -37,6 +32,24 @@ import path from "path";
 import ProductDetailPage from "@/pages/dashboard/inventory/Product/ProductDetail.jsx";
 import SaleListDetail from "@/pages/dashboard/sale/Customer/SaleListDetail.jsx";
 import UpdateProduct from "@/pages/dashboard/inventory/Product/UpdateProduct.jsx";
+import Expense from "@/pages/dashboard/expense/Expense.jsx";
+import CreateExpense from "@/pages/dashboard/expense/CreateExpense.jsx";
+import CreateExpenseCategory from "@/pages/dashboard/expenseCategory/CreateExpenseCategory.jsx";
+import ExpenseCategory from "@/pages/dashboard/expenseCategory/ExpenseCategory.jsx";
+import Income from "@/pages/dashboard/income/Income.jsx";
+import IncomeCategory from "@/pages/dashboard/incomeCategory/IncomeCategory.jsx";
+import Payment from "@/pages/dashboard/payment/Payment.jsx";
+import CreateIncomeCategory from "@/pages/dashboard/incomeCategory/CreateIncomeCategory.jsx";
+import PaymentCategory from "@/pages/dashboard/paymentCategory/PaymentCategory.jsx";
+import CreatePaymentCategory from "@/pages/dashboard/paymentCategory/CreatePaymentCategory.jsx";
+import UpdatePaymentCategory from "@/pages/dashboard/paymentCategory/UpdatePaymentCategory.jsx";
+import CreatePayment from "@/pages/dashboard/payment/CreatePayment.jsx";
+import UpdatePayment from "@/pages/dashboard/payment/UpdatePayment.jsx";
+import UpdateExpenseCategory from "@/pages/dashboard/expenseCategory/UpdateExpenseCategory.jsx";
+import UpdateIncomeCategory from "@/pages/dashboard/incomeCategory/UpdateIncomeCategory.jsx";
+import UpdateExpense from "@/pages/dashboard/expense/UpdateExpense.jsx";
+import CreateIncome from "@/pages/dashboard/income/CreateIncome.jsx";
+import UpdateIncome from "@/pages/dashboard/income/UpdateIncome.jsx";
 
 const dashboardRoute = [
   {
@@ -52,6 +65,181 @@ const dashboardRoute = [
       //   path: "/dashboard",
       //   element: <Home />,
       // },
+       // Expense
+      {
+        path: "/expense/expense-list",
+        element: <Expense/>,
+      },
+      {
+        path: "/expense/expense-list/create",
+        element: <CreateExpense/>,
+      },
+      {
+        path: "/expense/expense-list/update/:id",
+        element: <UpdateExpense/>,
+      },
+      // {
+      //   path: "/expense/quality",
+      //   element: <Quality />,
+      // },
+      // {
+      //   path: "/expense/quality/create",
+      //   element: <CreateQuality/>,
+      // },
+      // {
+      //   path: "/expense/quality/update/:id",
+      //   element: <UpdateQuality/>,
+      // },
+      {
+        path: "/expense/expense-category-list",
+        element: <ExpenseCategory />,
+      },
+      {
+        path: "/expense/expense-category-list/create",
+        element: <CreateExpenseCategory/>,
+      },
+      {
+        path: "/expense/expense-category-list/update/:id",
+        element: <UpdateExpenseCategory/>,
+      },
+      {
+        path: "/expense/category/update/:id",
+        element: <UpdateCategory/>,
+      },
+      {
+        path: "/expense/product",
+        element: <Product />,
+      },
+      {
+        path: "/expense/product/create",
+        element: <CreateProduct/>,
+      },
+      {
+        path: "/expense/product/detail/:id",
+        element: <ProductDetailPage/>,
+      },
+      {
+        path: "/expense/product/update/:id",
+        element: <UpdateProduct/>,
+      },
+      // Expense
+
+      //Payment
+
+       {
+        path: "/payment/payment-list",
+        element: <Payment/>,
+      },
+      {
+        path: "/payment/payment-list/create",
+        element: <CreatePayment/>,
+      },
+      {
+        path: "/payment/payment-list/update/:id",
+        element: <UpdatePayment/>,
+      },
+      // {
+      //   path: "/expense/quality",
+      //   element: <Quality />,
+      // },
+      // {
+      //   path: "/expense/quality/create",
+      //   element: <CreateQuality/>,
+      // },
+      // {
+      //   path: "/expense/quality/update/:id",
+      //   element: <UpdateQuality/>,
+      // },
+      {
+        path: "/payment/payment-category-list",
+        element: <PaymentCategory/>,
+      },
+      {
+        path: "/payment/payment-category-list/create",
+        element: <CreatePaymentCategory/>,
+      },
+      {
+        path: "/payment/payment-category-list/update/:id",
+        element: <UpdatePaymentCategory/>,
+      },
+      {
+        path: "/expense/product",
+        element: <Product />,
+      },
+      {
+        path: "/expense/product/create",
+        element: <CreateProduct/>,
+      },
+      {
+        path: "/expense/product/detail/:id",
+        element: <ProductDetailPage/>,
+      },
+      {
+        path: "/expense/product/update/:id",
+        element: <UpdateProduct/>,
+      },
+
+      //Payment
+
+
+        // Income
+      {
+        path: "/income/income-list",
+        element: <Income/>,
+      },
+      {
+        path: "/income/income-list/create",
+        element: <CreateIncome/>,
+      },
+      {
+        path: "/income/income-list/update/:id",
+        element: <UpdateIncome/>,
+      },
+      // {
+      //   path: "/expense/type/update/:id",
+      //   element: <UpdateType/>,
+      // },
+      // {
+      //   path: "/expense/quality",
+      //   element: <Quality />,
+      // },
+      // {
+      //   path: "/expense/quality/create",
+      //   element: <CreateQuality/>,
+      // },
+      // {
+      //   path: "/expense/quality/update/:id",
+      //   element: <UpdateQuality/>,
+      // },
+      {
+        path: "/income/income-category-list",
+        element: <IncomeCategory/>,
+      },
+      {
+        path: "/income/income-category-list/create",
+        element: <CreateIncomeCategory/>,
+      },
+      {
+        path: "/income/income-category-list/update/:id",
+        element: <UpdateIncomeCategory/>,
+      },
+      {
+        path: "/expense/product",
+        element: <Product />,
+      },
+      {
+        path: "/expense/product/create",
+        element: <CreateProduct/>,
+      },
+      {
+        path: "/expense/product/detail/:id",
+        element: <ProductDetailPage/>,
+      },
+      {
+        path: "/expense/product/update/:id",
+        element: <UpdateProduct/>,
+      },
+      // Income
       // Inventory
       {
         path: "/inventory/type",
@@ -176,26 +364,26 @@ const dashboardRoute = [
       //ReportList
 
       //COA
-      {
-        path : "/coa/coa-list",
-        element: <COA />,
-      },
-      {
-        path : "/coa/coa-create",
-        element: <CreateCOA />,
-      },
-      {
-        path : "/coa/coa-edit/:id",
-        element: <EditCOA />,
-      },
-      {
-        path : "/coa/coa-detail/:id",
-        element: <COADetail />,
-      },
-      {
-        path : "/coa/coa-detail-create",
-        element: <CreateCOADetail />,
-      },
+      // {
+      //   path : "/payment/payment-list",
+      //   element: <Payment />,
+      // },
+      // {
+      //   path : "/coa/coa-create",
+      //   element: <CreateCOA />,
+      // },
+      // {
+      //   path : "/coa/coa-edit/:id",
+      //   element: <EditCOA />,
+      // },
+      // {
+      //   path : "/coa/coa-detail/:id",
+      //   element: <COADetail />,
+      // },
+      // {
+      //   path : "/coa/coa-detail-create",
+      //   element: <CreateCOADetail />,
+      // },
 
       //COA
 

@@ -1,36 +1,35 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeftIcon } from "lucide-react";
 import { useCreateCustomerMutation } from "@/feature/api/saleApi/customerApi";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 
-// Helper function to convert KPY to grams
+// ✅ Helper: truncate only (no rounding)
+function toFixedDown(num, digits) {
+  const factor = Math.pow(10, digits);
+  return Math.floor(num * factor) / factor;
+}
+
+// ✅ KPY → Gram
 const kpyToGram = (kyat, pae, yway) => {
-  // Convert everything to kyat first, then to grams
   const totalKyat = kyat + pae / 16 + yway / 128;
-  return totalKyat * 16.6;
+  const gramValue = totalKyat * 16.6;
+  return Math.floor(gramValue * 100) / 100; // => number truncate 2 decimals
 };
 
-// Helper function to convert grams to KPY
+// ✅ Gram → KPY
 const gramToKPY = (gramValue) => {
   const totalKyat = gramValue / 16.6;
 
   const kyat = Math.floor(totalKyat);
   const paeValue = (totalKyat - kyat) * 16;
   const pae = Math.floor(paeValue);
-  const yway = (paeValue - pae) * 8; // allow decimal
+  const yway = toFixedDown((paeValue - pae) * 8, 2); // ✅ allow decimal, number
 
-  return { kyat, pae, yway: Number(yway.toFixed(2)) };
+  return { kyat, pae, yway };
 };
 
 const CreateCustomer = () => {
@@ -61,13 +60,13 @@ const CreateCustomer = () => {
     },
   });
 
-  // Handle remaining gold input changes
+  // ✅ Handle Remaining Gold Input Changes
   const handleRemainingGoldChange = (field, value) => {
     const numValue = value === "" ? "" : Number(value);
     const newRemainingGold = { ...remainingGold, [field]: numValue };
     setRemainingGold(newRemainingGold);
 
-    // Auto-calculate gram when KPY changes
+    // Auto-calc gram when KPY changes
     if (
       field !== "gram" &&
       numValue !== "" &&
@@ -80,10 +79,13 @@ const CreateCustomer = () => {
         Number(newRemainingGold.pae) || 0,
         Number(newRemainingGold.yway) || 0
       );
-      setRemainingGold((prev) => ({ ...prev, gram: gramValue.toFixed(2) }));
+      setRemainingGold((prev) => ({
+        ...prev,
+        gram: gramValue, // ✅ keep number
+      }));
     }
 
-    // Auto-calculate KPY when gram changes
+    // Auto-calc KPY when gram changes
     if (field === "gram" && numValue !== "") {
       const kpyValues = gramToKPY(Number(numValue) || 0);
       setRemainingGold((prev) => ({
@@ -95,6 +97,7 @@ const CreateCustomer = () => {
     }
   };
 
+  // ✅ Create Customer Submit
   const handleCreateCustomer = async (formData) => {
     try {
       const formDataWithGold = {
@@ -179,7 +182,7 @@ const CreateCustomer = () => {
           </h2>
 
           <div className="grid grid-cols-4 gap-3">
-            {/* Kyat Input */}
+            {/* Kyat */}
             <div>
               <label className="block mb-1 font-medium">ကျပ်</label>
               <Input
@@ -194,7 +197,7 @@ const CreateCustomer = () => {
               />
             </div>
 
-            {/* Pae Input */}
+            {/* Pae */}
             <div>
               <label className="block mb-1 font-medium">ပဲ</label>
               <Input
@@ -210,7 +213,7 @@ const CreateCustomer = () => {
               />
             </div>
 
-            {/* Yway Input (now allows decimal) */}
+            {/* Yway (decimal allowed) */}
             <div>
               <label className="block mb-1 font-medium">ရွေး</label>
               <Input
@@ -226,7 +229,7 @@ const CreateCustomer = () => {
               />
             </div>
 
-            {/* Gram Input */}
+            {/* Gram */}
             <div>
               <label className="block mb-1 font-medium">Gram</label>
               <Input

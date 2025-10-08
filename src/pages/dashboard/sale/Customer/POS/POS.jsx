@@ -139,6 +139,11 @@ const roundYwayAndCarry = (ywayFloat) => {
   return { carryPae, yway: finalYway };
 };
 
+function toFixedDown(num, digits) {
+  const factor = Math.pow(10, digits);
+  return (Math.floor(num * factor) / factor).toFixed(digits);
+}
+
 const POS = () => {
   const printRef = useRef(null);
   const [createOrder, { isLoading }] = useCreateOrderMutation();
@@ -247,8 +252,22 @@ const POS = () => {
 
     // console.log("Total 24K value (kyat):", total24KValue);
     // Convert total 24K value to KPY format
-    const result = convertToKPY(total24KValue);
+    let result = convertToKPY(total24KValue);
+    const rounded24KYway = roundYwayAndCarry(result.yway);
+
+    result = normalizeKPY(
+      result.kyat,
+      result.pae + (rounded24KYway?.carryPae || 0),
+      rounded24KYway?.yway || 0
+    );
     console.log("Calculate24K", result);
+
+    const convert24KGram = toFixedDown(
+      kpyToGram(result.kyat, result.pae, result.yway),
+      2
+    );
+
+    result.gram = convert24KGram;
 
     return result;
   };
@@ -291,14 +310,44 @@ const POS = () => {
   // Calculate sum of all convertTo24K detail results
 
   // Calculate total payments in grams
+  // const calculateTotalPaymentsInGrams = () => {
+  //   // console.log("calculateTotalPaymentsInGrams called");
+  //   if (!payments || payments.length === 0) {
+  //     // console.log("No payments, returning 0");
+  //     return 0;
+  //   }
+
+  //   const totalPayments = payments.reduce(
+  //     (total, payment) => ({
+  //       kyat: total.kyat + (Number(payment?.kyat) || 0),
+  //       pae: total.pae + (Number(payment?.pae) || 0),
+  //       yway: total.yway + (Number(payment?.yway) || 0),
+  //       gram: total.gram + (Number(payment?.gram) || 0),
+  //     }),
+  //     { kyat: 0, pae: 0, yway: 0, gram: 0 }
+  //   );
+  //   // console.log("Total payments KPY:", totalPayments);
+
+  //   // Convert to grams
+  //   const result = kpyToGram(
+  //     totalPayments.kyat,
+  //     totalPayments.pae,
+  //     totalPayments.yway
+  //   );
+  //   // console.log("calculateTotalPaymentsInGrams result:", result);
+  //   return result;
+  // };
+
+  // Replace your existing calculateTotalPaymentsInGrams with this version
   const calculateTotalPaymentsInGrams = () => {
     // console.log("calculateTotalPaymentsInGrams called");
-    if (!payments || payments.length === 0) {
-      // console.log("No payments, returning 0");
+    if ((!payments || payments.length === 0) && (!cash || Number(cash) <= 0)) {
+      // no payments and no cash entered
       return 0;
     }
 
-    const totalPayments = payments.reduce(
+    // Sum payments array (K/P/Y -> grams)
+    const totalPayments = (payments || []).reduce(
       (total, payment) => ({
         kyat: total.kyat + (Number(payment?.kyat) || 0),
         pae: total.pae + (Number(payment?.pae) || 0),
@@ -307,23 +356,41 @@ const POS = () => {
       }),
       { kyat: 0, pae: 0, yway: 0, gram: 0 }
     );
-    // console.log("Total payments KPY:", totalPayments);
 
-    // Convert to grams
-    const result = kpyToGram(
+    // Convert payments K/P/Y to grams
+    const paymentsGramsFromKPY = kpyToGram(
       totalPayments.kyat,
       totalPayments.pae,
       totalPayments.yway
     );
-    // console.log("calculateTotalPaymentsInGrams result:", result);
-    return result;
+
+    // Also include any explicit gram value stored in payment objects (if any)
+    const paymentsExtraGram = totalPayments.gram || 0;
+
+    // Convert entered cash (Ks) to grams using today's rate
+    const todayRateLocal = Number(items?.[0]?.todayRate) || 0;
+    let cashGrams = 0;
+    if (Number(cash) && Number(cash) > 0 && todayRateLocal > 0) {
+      const converted = convertCashToKPY(Number(cash), todayRateLocal);
+      // convertCashToKPY already returns gram (number)
+      cashGrams = Number(converted.gram) || 0;
+    }
+
+    const total = paymentsGramsFromKPY + paymentsExtraGram + cashGrams;
+
+    // console.log("calculateTotalPaymentsInGrams result:", {
+    //   paymentsGramsFromKPY,
+    //   paymentsExtraGram,
+    //   cashGrams,
+    //   total,
+    // });
+
+    return total;
   };
 
   // Calculate total discount payments in grams (negative values add, positive values subtract)
   const calculateTotalDiscountPaymentsInGrams = () => {
-    // console.log("calculateTotalDiscountPaymentsInGrams called");
     if (!discountPayments || discountPayments.length === 0) {
-      // console.log("No discount payments, returning 0");
       return 0;
     }
 
@@ -334,10 +401,7 @@ const POS = () => {
       const gram = Number(discount?.gram) || 0;
 
       // Convert to grams
-      const discountInGrams = kpyToGram(kyat, pae, yway) + gram;
-
-      // If discountCash is negative, it adds to the total (discount)
-      // If discountCash is positive, it subtracts from the total (additional charge)
+      const discountInGrams = kpyToGram(kyat, pae, yway);
       const discountCash = Number(discount?.discountCash) || 0;
 
       // Convert cash discount to grams using today's rate
@@ -351,94 +415,12 @@ const POS = () => {
           ? -discountInGrams - cashDiscountInGrams
           : discountInGrams + cashDiscountInGrams;
 
-      // console.log("Discount payment calculation:", {
-      //   discount,
-      //   discountInGrams,
-      //   discountCash,
-      //   todayRate,
-      //   cashDiscountInGrams,
-      //   signedDiscount,
-      //   runningTotal: total + signedDiscount,
-      // });
-
       return total + signedDiscount;
     }, 0);
 
     // console.log("calculateTotalDiscountPaymentsInGrams result:", result);
     return result;
   };
-  // Remaining gold = (Remaining balance + Gold (24K)) - (Payment - Discount Payment)
-  // const calculateRemainingGold = () => {
-  //   // console.log("calculateRemainingGold called");
-  //   // 1. Convert remaining balance to grams
-  //   const remainingBalanceGrams = kpyToGram(
-  //     customerRemainingBalance.kyat,
-  //     customerRemainingBalance.pae,
-  //     customerRemainingBalance.yway
-  //   );
-  //   console.log("Remaining balance grams:", remainingBalanceGrams);
-
-  //   // 2. Convert Gold (24K) to grams
-  //   const gold24K = calculateTotalConvert24K();
-  //   // const gold24KGrams = kpyToGram(gold24K.kyat, gold24K.pae, gold24K.yway);
-  //   // console.log("Gold 24K grams:", gold24K);
-  //   const gold24KGrams =
-  // typeof gold24K.gram === "number" && !isNaN(gold24K.gram)
-  //   ? gold24K.gram
-  //   : kpyToGram(gold24K.kyat, gold24K.pae, gold24K.yway);
-  //   console.log("Gold 24K grams:", gold24KGrams);
-
-  //   // 3. Get total payments in grams
-  //   const totalPaymentsGrams = calculateTotalPaymentsInGrams();
-  //   // console.log("Total payments grams:", totalPaymentsGrams);
-
-  //   // 4. Get total discount payments in grams
-  //   const totalDiscountPaymentsGrams = calculateTotalDiscountPaymentsInGrams();
-  //   // console.log("Total discount payments grams:", totalDiscountPaymentsGrams);
-
-  //   // 5. Apply the formula: (Remaining balance + Gold 24K) - (Payment - Discount)
-  //   // const totalRemainingGrams = remainingBalanceGrams + gold24KGrams;
-  //   const totalRemainingGrams =
-  //     (gold24KGrams + remainingBalanceGrams) - (totalPaymentsGrams - totalDiscountPaymentsGrams);
-  //   console.log("Total remaining grams:", totalRemainingGrams);
-
-  //   // Convert back to KPY format
-  //   const result = gramToKPY(totalRemainingGrams); // Ensure non-negative value
-  //   console.log("calculateRemainingGold result:", result);
-  //   return result;
-  // };
-
-  //   const calculateRemainingGold = () => {
-  //   const prev24K = convertPreviousBalanceTo24K?.() || {};
-  //   const gold24K = calculateTotalConvert24K?.() || {};
-
-  //   const prevGram =
-  //     typeof prev24K.gram === "number" ? prev24K.gram
-  //     : kpyToGram(prev24K.kyat || 0, prev24K.pae || 0, prev24K.yway || 0);
-
-  //   const goldGram =
-  //     typeof gold24K.gram === "number" ? gold24K.gram
-  //     : kpyToGram(gold24K.kyat || 0, gold24K.pae || 0, gold24K.yway || 0);
-
-  //   const totalPaymentsGrams = calculateTotalPaymentsInGrams() || 0;
-  //   const totalDiscountPaymentsGrams = calculateTotalDiscountPaymentsInGrams() || 0;
-
-  //   // keep full precision here
-  //   let totalRemainingGrams =
-  //     prevGram + goldGram - (totalPaymentsGrams - totalDiscountPaymentsGrams);
-
-  //   if (totalRemainingGrams < 0) totalRemainingGrams = 0;
-
-  //   // convert to K/P/Y using the *exact* grams (no early rounding)
-  //   const result = gramToKPY(totalRemainingGrams);
-
-  //   // show grams rounded only for display
-  //   result.gram = parseFloat(totalRemainingGrams.toFixed(2));
-
-  //   console.log("calculateRemainingGold result:", { result  },prev24K,gold24K,prevGram,goldGram,totalPaymentsGrams,totalDiscountPaymentsGrams,totalRemainingGrams);
-
-  //   return result;
-  // };
 
   const calculateRemainingGold = () => {
     if (!items || items.length === 0) {
@@ -481,27 +463,46 @@ const POS = () => {
 
     // formula: (previous + gold) - (payments - discounts)
     let totalRemainingGrams =
-      prevGram + goldGram - (totalPaymentsGrams - totalDiscountPaymentsGrams);
+      prevGram + goldGram - totalPaymentsGrams - totalDiscountPaymentsGrams;
     if (totalRemainingGrams < 0) totalRemainingGrams = 0;
+
+    console.log("totalRemainingGrams:", totalRemainingGrams);
 
     const totalKyatValue = totalRemainingGrams / 16.6; // fractional kyat
     const totalYway = totalKyatValue * 128; // fractional yway (can be decimal)
 
-    const kyat = Math.floor(totalYway / 128);
-    const remYwayAfterKyat = totalYway - kyat * 128; // still in yway units
-    const pae = Math.floor(remYwayAfterKyat / 8);
-    const ywayDecimal = remYwayAfterKyat - pae * 8; // decimal yway (0 <= ywayDecimal < 8)
+    let kyat = Math.floor(totalYway / 128);
+    let remYwayAfterKyat = totalYway - kyat * 128; // still in yway units
+    let pae = Math.floor(remYwayAfterKyat / 8);
+    let ywayDecimal = remYwayAfterKyat - pae * 8; // decimal yway (0 <= ywayDecimal < 8)
 
     // round yway decimal to desired precision (e.g., 2 decimals)
-    const yway = parseFloat(ywayDecimal.toFixed(2));
+    const roundedYway = roundYwayAndCarry(ywayDecimal);
+
+    const normalized = normalizeKPY(
+      kyat,
+      pae + (roundedYway?.carryPae || 0),
+      roundedYway?.yway || 0
+    );
+    normalized.yway = parseFloat(toFixedDown(normalized.yway, 2));
+    normalized.gram = parseFloat(
+      toFixedDown(
+        kpyToGram(normalized.kyat, normalized.pae, normalized.yway),
+        2
+      )
+    );
+    console.log("Normalized remaining KPY:", normalized.gram);
 
     // convert to K/P/Y using the precise gramToKPY (which rounds to nearest yway)
     const result = {
-      kyat,
-      pae,
-      yway,
-      gram: parseFloat(totalRemainingGrams.toFixed(3)),
+      kyat: normalized.kyat,
+      pae: normalized.pae,
+      yway: normalized.yway,
+      // gram: parseFloat(toFixedDown(totalRemainingGrams, 2)),
+      normalizedGram: normalized.gram,
     };
+
+    console.log("result:", result?.gram);
 
     // show grams rounded only for display
     // result.gram = parseFloat(totalRemainingGrams.toFixed(2));
@@ -548,7 +549,24 @@ const POS = () => {
       previousBalanceQuality
     );
 
-    const result = convertToKPY(convert24KValue);
+    console.log("convert24KValue (fractional kyat):", (convert24KValue, 2));
+    let result = convertToKPY(convert24KValue);
+    const roundedYway = roundYwayAndCarry(result.yway);
+
+    console.log("roundedYway:", roundedYway);
+
+    result = normalizeKPY(
+      result.kyat,
+      result.pae + (roundedYway?.carryPae || 0),
+      roundedYway?.yway || 0
+    );
+
+    result.yway = parseFloat(toFixedDown(result.yway, 2));
+
+    result.gram = parseFloat(
+      toFixedDown(kpyToGram(result.kyat, result.pae, result.yway), 2)
+    );
+
     console.log("convertPreviousBalanceTo24K result:", result);
     return result;
   };
@@ -757,12 +775,25 @@ const POS = () => {
       shweKPY.yway + alyotKPY.yway
     );
 
-    const netKyat = netKPY.kyat;
-    const netPae = netKPY.pae;
-    const netYway = netKPY.yway;
+    // ✅ round yway and carry for netKPY
+    const roundedNetYway = roundYwayAndCarry(netKPY.yway);
+
+    const finalNetKPY = normalizeKPY(
+      netKPY.kyat,
+      netKPY.pae + (roundedNetYway?.carryPae || 0),
+      roundedNetYway?.yway || 0
+    );
+
+    const netKyat = finalNetKPY.kyat;
+    const netPae = finalNetKPY.pae;
+    const netYway = finalNetKPY.yway;
+
+    // const netKyat = netKPY.kyat;
+    // const netPae = netKPY.pae;
+    // const netYway = netKPY.yway;
 
     // Calculate net grams
-    const netGram = kpyToGram(netKyat, netPae, netYway);
+    const netGram = toFixedDown(kpyToGram(netKyat, netPae, netYway), 2);
 
     // const netGram = Number(shweGram || 0) + Number(alyotGram || 0);
 
@@ -773,11 +804,29 @@ const POS = () => {
       netYway,
       Number(item.karat || 24)
     );
-    const convert24KDetail = convertToKPY(convert24KValue);
+    let convert24KDetail = convertToKPY(convert24KValue);
+
+    const rounded24KYway = roundYwayAndCarry(convert24KDetail.yway);
+
+    convert24KDetail = normalizeKPY(
+      convert24KDetail.kyat,
+      convert24KDetail.pae + (rounded24KYway?.carryPae || 0),
+      rounded24KYway?.yway || 0
+    );
+
+    const convert24KGram = toFixedDown(
+      kpyToGram(
+        convert24KDetail.kyat,
+        convert24KDetail.pae,
+        convert24KDetail.yway
+      ),
+      2
+    );
+
+    convert24KDetail.gram = convert24KGram;
 
     console.log("convert24KValue :", convert24KValue);
     console.log("convertTo24K :", convertTo24K);
-    console.log("convert24KDetail :", convert24KDetail);
 
     const result = {
       qty,
@@ -789,9 +838,9 @@ const POS = () => {
       shwePae: shweKPY.pae,
       shweYway: shweKPY.yway,
       shweGram,
-      netKyat: netKPY.kyat,
-      netPae: netKPY.pae,
-      netYway: netKPY.yway,
+      netKyat: finalNetKPY.kyat,
+      netPae: finalNetKPY.pae,
+      netYway: finalNetKPY.yway,
       netGram,
       convert24KValue,
       convert24KDetail,
@@ -800,72 +849,92 @@ const POS = () => {
     return result;
   };
 
-  // Calculate total payments
-  // const calculateTotalPayments = () => {
-  //   // console.log("calculateTotalPayments called");
-  //   if (!payments || payments.length === 0) {
-  //     // console.log("No payments, returning zero");
-  //     return { kyat: 0, pae: 0, yway: 0, gram: 0 };
-  //   }
-
-  //   return payments.map((p) => ({
-  //     kyat: Number(p?.kyat) || 0,
-  //     pae: Number(p?.pae) || 0,
-  //     yway: Number(p?.yway) || 0,
-  //     gram: Number(p?.gram) || 0,
-  //   }));
-
-  //   // const result = payments.reduce(
-  //   //   (total, payment) => ({
-  //   //     kyat: total.kyat + (Number(payment?.kyat) || 0),
-  //   //     pae: total.pae + (Number(payment?.pae) || 0),
-  //   //     yway: total.yway + (Number(payment?.yway) || 0),
-  //   //     gram: total.gram + (Number(payment?.gram) || 0),
-  //   //   }),
-  //   //   { kyat: 0, pae: 0, yway: 0, gram: 0 }
-  //   // );
-  //   // // console.log("calculateTotalPayments result:", result);
-  //   // return result;
-  // };
-
-  // Calculate total cash from all items including discountCash effect
   // const calculateTotalCash = () => {
-  //   // console.log("calculateTotalCash called");
-  //   if (!items || items.length === 0) {
-  //     // console.log("No items, returning 0");
-  //     return 0;
-  //   }
 
-  //   const convert24KGram = Number(convert24K) || 0;
+  //   if (!items || items.length === 0) return 0;
+
   //   const baseTotalCash = items.reduce((sum, item) => {
+  //     const qty = Number(item.qty || 1);
+
+  //     // alyot values
+  //     const rawAlyotKyat = Number(item.alyautKyat || 0) * qty;
+  //     const rawAlyotPae = Number(item.alyautPae || 0) * qty;
+  //     const rawAlyotYway = Number(item.alyautYway || 0) * qty;
+
+  //     const alyotKPY = normalizeKPY(rawAlyotKyat, rawAlyotPae, rawAlyotYway);
+
+  //     // shwe values
+  //     const shweKyat = Number(item.kyat || 0);
+  //     const shwePae = Number(item.pae || 0);
+  //     const shweYway = Number(item.yway || 0);
+
+  //     const roundedShweYway = roundYwayAndCarry(shweYway);
+
+  //     const shweKPY = normalizeKPY(
+  //       shweKyat,
+  //       shwePae + (roundedShweYway?.carryPae || 0),
+  //       roundedShweYway?.yway || 0
+  //     );
+
+  //     // net weight for **this** item
+  //     const netKPY = normalizeKPY(
+  //       shweKPY.kyat + alyotKPY.kyat,
+  //       shweKPY.pae + alyotKPY.pae,
+  //       shweKPY.yway + alyotKPY.yway
+  //     );
+
+  //     const netGram = kpyToGram(netKPY.kyat, netKPY.pae, netKPY.yway);
+
+  //     console.log(netKPY, "netKPY:");
+
+  //     const totalKyatValue = convertTo24K(
+  //       netKPY.kyat,
+  //       netKPY.pae,
+  //       netKPY.yway,
+  //       Number(item.karat || 24)
+  //     );
+
+  //     let convert24KDetail = convertToKPY(totalKyatValue);
+
+  //     const rounded24KYway = roundYwayAndCarry(convert24KDetail.yway);
+
+  //     convert24KDetail = normalizeKPY(
+  //       convert24KDetail.kyat,
+  //       convert24KDetail.pae + (rounded24KYway?.carryPae || 0),
+  //       rounded24KYway?.yway || 0
+  //     );
+  //     // netKPY.kyat + netKPY.pae / 16 + netKPY.yway / 128;
+
+  //     // console.log(roundedTotalKPY, "roundedTotalKPY:");
+
   //     const todayRate = Number(item.todayRate || 0);
-  //     const itemTotal = convert24KGram * todayRate;
-  //     console.log("Item cash calculation:", {
-  //       item,
-  //       convert24KGram,
-  //       todayRate,
-  //       itemTotal,
-  //     });
+  //     // const itemTotal = netGram * todayRate;
+  //     // const itemTotal = (finalKPY.kyat + finalKPY.pae / 16 + finalKPY.yway / 128) * todayRate;
+  //     const itemTotal =
+  //       (convert24KDetail.kyat +
+  //         convert24KDetail.pae / 16 +
+  //         convert24KDetail.yway / 128) *
+  //       todayRate;
+  //     console.log("itemTotal:", itemTotal);
+  //     console.log("netGram:", netGram);
+
   //     return sum + itemTotal;
   //   }, 0);
 
-  //   // Get total discount cash from all discount payments
+  //   // discount
   //   let totalDiscountCash = 0;
   //   if (discountPayments && discountPayments.length > 0) {
   //     totalDiscountCash = discountPayments.reduce((sum, discount) => {
   //       const discountCash = Number(discount?.discountCash) || 0;
-  //       // console.log("Discount cash calculation:", {
-  //       //   discount,
-  //       //   discountCash,
-  //       //   runningTotal: sum + discountCash,
-  //       // });
+  //       console.log("Discount cash calculation:", {
+  //         discount,
+  //         discountCash,
+  //         runningTotal: sum + discountCash,
+  //       });
   //       return sum + discountCash;
   //     }, 0);
   //   }
 
-  //   // Apply discountCash effect:
-  //   // Negative discountCash adds to total (discount)
-  //   // Positive discountCash subtracts from total (additional charge)
   //   const finalTotalCash = baseTotalCash - totalDiscountCash;
   //   // console.log("calculateTotalCash result:", {
   //   //   baseTotalCash,
@@ -876,83 +945,95 @@ const POS = () => {
   //   return finalTotalCash;
   // };
 
+  // Replace your existing calculateTotalCash with this version
   const calculateTotalCash = () => {
     if (!items || items.length === 0) return 0;
 
+    // 1) compute base total cash from items (same logic you had)
     const baseTotalCash = items.reduce((sum, item) => {
       const qty = Number(item.qty || 1);
 
-      // alyot values
+      // alyot
       const rawAlyotKyat = Number(item.alyautKyat || 0) * qty;
       const rawAlyotPae = Number(item.alyautPae || 0) * qty;
       const rawAlyotYway = Number(item.alyautYway || 0) * qty;
-
       const alyotKPY = normalizeKPY(rawAlyotKyat, rawAlyotPae, rawAlyotYway);
 
-      // shwe values
+      // shwe
       const shweKyat = Number(item.kyat || 0);
       const shwePae = Number(item.pae || 0);
       const shweYway = Number(item.yway || 0);
-
       const roundedShweYway = roundYwayAndCarry(shweYway);
-
       const shweKPY = normalizeKPY(
         shweKyat,
         shwePae + (roundedShweYway?.carryPae || 0),
         roundedShweYway?.yway || 0
       );
 
-      // net weight for **this** item
+      // net K/P/Y
       const netKPY = normalizeKPY(
         shweKPY.kyat + alyotKPY.kyat,
         shweKPY.pae + alyotKPY.pae,
         shweKPY.yway + alyotKPY.yway
       );
 
-      const netGram = kpyToGram(netKPY.kyat, netKPY.pae, netKPY.yway);
-
+      // convert to 24K and to KPY detail
       const totalKyatValue = convertTo24K(
         netKPY.kyat,
         netKPY.pae,
         netKPY.yway,
         Number(item.karat || 24)
       );
-      // netKPY.kyat + netKPY.pae / 16 + netKPY.yway / 128;
 
-      const todayRate = Number(item.todayRate || 0);
-      // const itemTotal = netGram * todayRate;
-      const itemTotal = totalKyatValue * todayRate;
-      console.log("itemTotal:", itemTotal);
-      console.log("netGram:", netGram);
+      let convert24KDetail = convertToKPY(totalKyatValue);
+      const rounded24KYway = roundYwayAndCarry(convert24KDetail.yway);
+      convert24KDetail = normalizeKPY(
+        convert24KDetail.kyat,
+        convert24KDetail.pae + (rounded24KYway?.carryPae || 0),
+        rounded24KYway?.yway || 0
+      );
+
+      const todayRateLocal = Number(item.todayRate || 0);
+      const itemTotal =
+        (convert24KDetail.kyat +
+          convert24KDetail.pae / 16 +
+          convert24KDetail.yway / 128) *
+        todayRateLocal;
 
       return sum + itemTotal;
     }, 0);
 
-    // discount
+    // 2) discount cash sum (same as you had)
     let totalDiscountCash = 0;
     if (discountPayments && discountPayments.length > 0) {
       totalDiscountCash = discountPayments.reduce((sum, discount) => {
         const discountCash = Number(discount?.discountCash) || 0;
-        console.log("Discount cash calculation:", {
-          discount,
-          discountCash,
-          runningTotal: sum + discountCash,
-        });
         return sum + discountCash;
       }, 0);
     }
 
-    const finalTotalCash = baseTotalCash - totalDiscountCash;
-    // console.log("calculateTotalCash result:", {
-    //   baseTotalCash,
-    //   totalDiscountCash,
-    //   finalTotalCash,
-    // });
+    // 3) payments -> grams (this includes any explicit cash input because
+    // calculateTotalPaymentsInGrams should account for `cash`)
+    const paymentsGrams = calculateTotalPaymentsInGrams() || 0;
+    const todayRateForConversion = Number(items?.[0]?.todayRate) || 0;
+    let paymentsKsFromArray = 0;
+    if (paymentsGrams > 0 && todayRateForConversion > 0) {
+      paymentsKsFromArray = (paymentsGrams / 16.6) * todayRateForConversion;
+    }
 
-    return finalTotalCash;
+    // 4) direct cash entered by user (Ks) -> use directly (do NOT convert round-trip)
+
+    // 5) final total: base - discount - (payments from array) - (cash input)
+    const finalTotalCash =
+      baseTotalCash - totalDiscountCash - paymentsKsFromArray;
+
+    console.log(finalTotalCash, "finalTotalCash:");
+
+    return Math.max(0, Number(finalTotalCash.toFixed(2)));
   };
 
   // Get todayRate from items
+
   const getTodayRate = () => {
     // console.log("getTodayRate called");
     if (items && items.length > 0) {
@@ -967,38 +1048,77 @@ const POS = () => {
   const todayRate = getTodayRate();
 
   // Helper function to convert cash (Kyat) into KPY and Gram using today's rate
-  const convertCashToKPY = (cashAmount, todayRate) => {
-    // console.log("convertCashToKPY called:", { cashAmount, todayRate });
+  // const convertCashToKPY = (cashAmount, todayRate) => {
+  //   // console.log("convertCashToKPY called:", { cashAmount, todayRate });
 
+  //   if (!cashAmount || cashAmount <= 0 || !todayRate || todayRate <= 0) {
+  //     // console.log("Invalid values, returning zero");
+  //     return { kyat: 0, pae: 0, yway: 0, gram: 0 };
+  //   }
+
+  //   // Step 1: cash → Kyat (stage)
+  //   const totalKyat = cashAmount / todayRate;
+  //   console.log("Cash to Kyat:", totalKyat);
+
+  //   // Step 2: split into kyat / pae / yway
+  //   const kyat = Math.floor(totalKyat);
+  //   console.log("Kyat part:", kyat);
+
+  //   const paeValue = (totalKyat - kyat) * 16;
+  //   const pae = toFixedDown(paeValue, 0);
+
+  //   console.log("paeValue:", paeValue, "Pae part:", pae);
+
+  //   const ywayValue = (paeValue - pae) * 8;
+  //   console.log("ywayValue", ywayValue);
+
+  //   const yway = toFixedDown(ywayValue, 2);
+
+  //   // Step 3: convert Kyat to grams
+  //   const gram = totalKyat * 16.6;
+
+  //   const result = {
+  //     kyat,
+  //     pae,
+  //     yway,
+  //     gram: parseFloat(gram.toFixed(3)),
+  //   };
+
+  //   // console.log("convertCashToKPY result:", result);
+  //   return result;
+  // };
+
+  const convertCashToKPY = (cashAmount, todayRate) => {
     if (!cashAmount || cashAmount <= 0 || !todayRate || todayRate <= 0) {
-      // console.log("Invalid values, returning zero");
       return { kyat: 0, pae: 0, yway: 0, gram: 0 };
     }
 
-    // Step 1: cash → Kyat (stage)
-    const totalKyat = cashAmount / todayRate;
-    // console.log("Cash to Kyat:", totalKyat);
+    const totalKyat = cashAmount / todayRate; // full precision
 
-    // Step 2: split into kyat / pae / yway
     const kyat = Math.floor(totalKyat);
-
     const paeValue = (totalKyat - kyat) * 16;
-    const pae = Math.floor(paeValue);
+    const pae = Math.floor(paeValue); // use Math.floor not toFixedDown for internal
 
-    const yway = Math.floor((paeValue - pae) * 8);
+    const ywayValue = (paeValue - pae) * 8;
+    // Keep yway as full precision here (for display you can round)
+    // const yway = Math.round(ywayValue * 100) / 100; // e.g., 2 decimals for UI only
 
-    // Step 3: convert Kyat to grams
+    const yway = toFixedDown(ywayValue, 2); // or keep 2 decimals for yway
+
+    // convert totalKyat to gram (and use toFixedDown for 3 decimal places)
+
+    console.log("yway:", yway);
+
+    // IMPORTANT: keep gram full precision for internal calc (do NOT toFixed here)
+    // const gram = toFixedDown(totalKyat * 16.6,2);
     const gram = totalKyat * 16.6;
 
-    const result = {
+    return {
       kyat,
       pae,
       yway,
-      gram: parseFloat(gram.toFixed(3)),
+      gram, // full precision number
     };
-
-    // console.log("convertCashToKPY result:", result);
-    return result;
   };
 
   // Calculate total discount
@@ -1025,40 +1145,40 @@ const POS = () => {
 
   const handleDownloadPdf = async () => {
     try {
-    const ok = await handleConfirmOrder();
-    if (ok){
-      // alert("Order confirm fail!");
-      return;
-    } 
-    const element = printRef.current;
-    if (!element) {
-      return;
-    }
+      const ok = await handleConfirmOrder();
+      if (ok) {
+        // alert("Order confirm fail!");
+        return;
+      }
+      const element = printRef.current;
+      if (!element) {
+        return;
+      }
 
-    const canvas = await html2canvas(element, {
-      scale: 2,
-      useCORS: true,
-      ignoreElements: (el) => el.classList.contains("hide-on-pdf"),
-    });
-    const data = canvas.toDataURL("image/png");
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        ignoreElements: (el) => el.classList.contains("hide-on-pdf"),
+      });
+      const data = canvas.toDataURL("image/png");
 
-    const pdf = new jsPDF({
-      orientation: "portrait",
-      unit: "px",
-      format: "a4",
-    });
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "px",
+        format: "a4",
+      });
 
-    const imgProperties = pdf.getImageProperties(data);
-    const pdfWidth = pdf.internal.pageSize.getWidth();
+      const imgProperties = pdf.getImageProperties(data);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
 
-    const pdfHeight = (imgProperties.height * pdfWidth) / imgProperties.width;
+      const pdfHeight = (imgProperties.height * pdfWidth) / imgProperties.width;
 
-    pdf.addImage(data, "PNG", 0, 0, pdfWidth, pdfHeight);
-    pdf.save("examplepdf.pdf");
-     alert("Order confirm success! PDF downloaded.");
+      pdf.addImage(data, "PNG", 0, 0, pdfWidth, pdfHeight);
+      pdf.save("examplepdf.pdf");
+      alert("Order confirm success! PDF downloaded.");
       dispatch(clearCart());
     } catch (error) {
-       alert("Something went wrong while generating PDF.");
+      alert("Something went wrong while generating PDF.");
     }
   };
 
@@ -1225,7 +1345,7 @@ const POS = () => {
                           {totals.netYway?.toFixed(2)}
                         </td>
                         <td className="border p-1 bg-yellow-100">
-                          {totals?.netGram?.toFixed(2)}
+                          {totals?.netGram}
                         </td>
 
                         {/* Convert to 24K - FIXED */}
@@ -1239,7 +1359,7 @@ const POS = () => {
                           {totals.convert24KDetail?.yway?.toFixed(2) || 0}
                         </td>
                         <td className="border p-1 bg-yellow-100">
-                          {totals.convert24KDetail?.gram?.toFixed(2) || 0}
+                          {totals.convert24KDetail?.gram || 0}
                         </td>
                         {/* San Kyi Thar */}
 
@@ -1306,7 +1426,7 @@ const POS = () => {
                     {calculateTotalConvert24K()?.yway?.toFixed(2) || 0}
                   </td>
                   <td className="border p-1">
-                    {calculateTotalConvert24K()?.gram?.toFixed(2) || 0}
+                    {calculateTotalConvert24K()?.gram || 0}
                   </td>
                 </tr>
 
@@ -1358,61 +1478,6 @@ const POS = () => {
                     {convertPreviousBalanceTo24K()?.gram?.toFixed(2) || 0}
                   </td>
                 </tr>
-
-                {/* Combined Total Row - REMAINING BALANCE + GOLD (24K) with proper addition */}
-                {/* <tr className="bg-yellow-50 font-bold">
-                  <td className="border p-1"></td>
-                  <td className="border p-1 text-center">Combined Total</td>
-                  <td className="border p-1"></td>
-                  <td className="border p-1"colSpan={4}></td>
-                  <td className="border p-1"colSpan={4}></td>
-                  <td className="border p-1"></td>
-                  <td className="border p-1" colSpan={4}></td>
-                  <td className="border p-1">
-                    {calculateCombinedTotal()?.kyat || 0}
-                  </td>
-                  <td className="border p-1">
-                    {calculateCombinedTotal()?.pae || 0}
-                  </td>
-                  <td className="border p-1">
-                    {calculateCombinedTotal()?.yway || 0}
-                  </td>
-                  <td className="border p-1">
-                    {calculateCombinedTotal()?.gram?.toFixed(2) || 0}
-                  </td>
-                </tr> */}
-
-                {/* Payment Row */}
-                {/* <tr>
-                  <td className="border p-1"></td>
-                  <td className="border p-1 text-center font-bold">Payment</td>
-                  <td className="border p-1"></td>
-                  <td className="border p-1"></td>
-                  <td className="border p-1">
-                    {calculateTotalPayments().kyat}
-                  </td>
-                  <td className="border p-1">{calculateTotalPayments().pae}</td>
-                  <td className="border p-1">
-                    {calculateTotalPayments().yway}
-                  </td>
-                  <td className="border p-1">
-                    {calculateTotalPayments().gram?.toFixed(2)}
-                  </td>
-                  <td className="border p-1"></td>
-                  <td className="border p-1" colSpan={4}></td>
-                  <td className="border p-1" colSpan={4}></td>
-                  <td className="border p-1" colSpan={4}></td>
-                  {payments && payments.length > 0 && (
-                    <td className="border p-1">
-                      <Button
-                        onClick={handleDeletePayment}
-                        className="border p-5 bg-red-400 text-black hover:bg-red-500 hover:text-white"
-                      >
-                        X
-                      </Button>
-                    </td>
-                  )}
-                </tr> */}
 
                 {/* Heading row */}
                 {/* <tr>
@@ -1483,48 +1548,6 @@ const POS = () => {
 
                 {/* )} */}
 
-                {/* <tr>
-                  <td className="border p-1"></td>
-                  <td className="border p-1 text-center font-bold">
-                    Payment (Cash)
-                  </td>
-                  <td className="border p-1" colSpan={18}>
-                    <div className="flex flex-col items-center gap-1">
-                      <span>
-                        ငွေပမာဏ: {Number(cash || 0)?.toLocaleString()} Ks
-                      </span>
-                      {todayRate > 0 ? (
-                        <div className="text-sm">
-                          <span>
-                            Today's Rate: {todayRate?.toLocaleString()} Ks/G
-                          </span>
-                          <br />
-                          <span>
-                            K: {convertCashToKPY(Number(cash), todayRate).kyat},
-                          </span>
-                          <span>
-                            P: {convertCashToKPY(Number(cash), todayRate).pae},
-                          </span>
-                          <span>
-                            Y: {convertCashToKPY(Number(cash), todayRate).yway},
-                          </span>
-                          <span>
-                            G:{" "}
-                            {convertCashToKPY(
-                              Number(cash),
-                              todayRate
-                            ).gram.toFixed(2)}
-                          </span>
-                        </div>
-                      ) : (
-                        <span className="text-sm text-red-500">
-                          Please enter today's rate
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                </tr> */}
-
                 <tr>
                   <td className="border p-1"></td>
                   <td className="border p-1 text-center font-bold">
@@ -1545,7 +1568,7 @@ const POS = () => {
                     {convertCashToKPY(Number(cash), todayRate).yway || 0}
                   </td>
                   <td className="border p-1">
-                    {convertCashToKPY(Number(cash), todayRate).gram.toFixed(
+                    {convertCashToKPY(Number(cash), todayRate).gram?.toFixed(
                       2
                     ) || 0}
                   </td>
@@ -1621,7 +1644,7 @@ const POS = () => {
                     {calculateRemainingGold()?.yway || 0}
                   </td>
                   <td className="border p-1">
-                    {calculateRemainingGold()?.gram?.toFixed(2) || 0}
+                    {calculateRemainingGold()?.normalizedGram || 0}
                   </td>
                   <td className="border p-1"></td>
                   <td className="border p-1" colSpan={4}></td>

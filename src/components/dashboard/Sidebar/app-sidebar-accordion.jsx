@@ -16,6 +16,12 @@ const AppSidebarAccordion = () => {
   const dashboardItem = SidebarConfig.find(
     (item) => item.title === "Dashboard"
   );
+  const expenseItem = SidebarConfig.find(
+    (item) => item.title === "Expenses"
+  );
+  const incomeItem = SidebarConfig.find(
+    (item) => item.title === "Incomes"
+  );
   const inventoryItem = SidebarConfig.find(
     (item) => item.title === "Inventory"
   );
@@ -23,8 +29,8 @@ const AppSidebarAccordion = () => {
   const purchaseItem = SidebarConfig.find((item) => item.title === "Purchase");
   const stockItem = SidebarConfig.find((item) => item.title === "Stocks");
   const reportItem = SidebarConfig.find((item) => item.title === "Reports");
-  const coaItem = SidebarConfig.find(
-    (item) => item.title === "Charts of Accounts"
+  const paymentItem = SidebarConfig.find(
+    (item) => item.title === "Payments"
   );
 
   return (
@@ -47,24 +53,121 @@ const AppSidebarAccordion = () => {
           </Link>
         </div>
       )}
-      
-{/* Charts of Account */}
-      {coaItem && (
-        <div className="px-[15px] py-2">
-          <Link
-            to={coaItem.url}
-            className={`flex items-center gap-[10px] ${
-              location.pathname.includes("/coa")
+
+
+        {/* Payment */}
+
+       {paymentItem && (
+        <Accordion type="single" collapsible className="w-full">
+          <AccordionItem className="border-none" value="payment">
+            <AccordionTrigger
+              className={`hover:no-underline w-full px-[15px] ${
+                location.pathname.includes("/payment")
                   ? "text-[#dea519] font-extrabold"
                   : "text-[#939393]"
               }`}
-          >
-            <coaItem.icon className="w-5 h-5" />
-            <span className="text-[16px] font-[600] leading-[20px]">
-              {coaItem.title}
-            </span>
-          </Link>
-        </div>
+            >
+              <div className="flex items-center gap-[10px]">
+                <paymentItem.icon className="w-5 h-5" />
+                <span className="text-[16px] font-[600] leading-[20px]">
+                  {paymentItem.title}
+                </span>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              {paymentItem.items?.map((subItem) => (
+                <NavLink
+                  to={subItem.url}
+                  key={subItem.title}
+                  className={`block py-2 px-12 mt-2 p-3 rounded hover:bg-gray-100 ${
+                    location.pathname.startsWith(subItem.url)
+                      ? "bg-gray-200 text-[#dea519]"
+                      : "text-[#939393]"
+                  }`}
+                >
+                  {subItem.title}
+                </NavLink>
+              ))}
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      )}
+    
+
+      {/* Expense Accordion */}
+
+       {expenseItem && (
+        <Accordion type="single" collapsible className="w-full">
+          <AccordionItem className="border-none" value="expense">
+            <AccordionTrigger
+              className={`hover:no-underline w-full px-[15px] ${
+                location.pathname.includes("/expense")
+                  ? "text-[#dea519] font-extrabold"
+                  : "text-[#939393]"
+              }`}
+            >
+              <div className="flex items-center gap-[10px]">
+                <expenseItem.icon className="w-5 h-5" />
+                <span className="text-[16px] font-[600] leading-[20px]">
+                  {expenseItem.title}
+                </span>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              {expenseItem.items?.map((subItem) => (
+                <NavLink
+                  to={subItem.url}
+                  key={subItem.title}
+                  className={`block py-2 px-12 mt-2 p-3 rounded hover:bg-gray-100 ${
+                    location.pathname.startsWith(subItem.url)
+                      ? "bg-gray-200 text-[#dea519]"
+                      : "text-[#939393]"
+                  }`}
+                >
+                  {subItem.title}
+                </NavLink>
+              ))}
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      )}
+
+      {/* Income Accordion */}
+
+       {incomeItem && (
+        <Accordion type="single" collapsible className="w-full">
+          <AccordionItem className="border-none" value="income">
+            <AccordionTrigger
+              className={`hover:no-underline w-full px-[15px] ${
+                location.pathname.includes("/income")
+                  ? "text-[#dea519] font-extrabold"
+                  : "text-[#939393]"
+              }`}
+            >
+              <div className="flex items-center gap-[10px]">
+                <incomeItem.icon className="w-5 h-5" />
+                <span className="text-[16px] font-[600] leading-[20px]">
+                  {incomeItem.title}
+                </span>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              {incomeItem.items?.map((subItem) => (
+                <NavLink
+                  to={subItem.url}
+                  key={subItem.title}
+                  className={`block py-2 px-12 mt-2 p-3 rounded hover:bg-gray-100 ${
+                    location.pathname.startsWith(subItem.url)
+                      ? "bg-gray-200 text-[#dea519]"
+                      : "text-[#939393]"
+                  }`}
+                >
+                  {subItem.title}
+                </NavLink>
+              ))}
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       )}
 
 

@@ -15,22 +15,34 @@ import {
 } from "@/feature/api/inventory/qualityApi";
 import { useGetTypeQuery } from "@/feature/api/inventory/typeApi";
 import Swal from "sweetalert2";
+import { confirmDelete } from "@/lib/confirmDelete";
+import usePaginatedList from "@/hooks/usePaginatedList";
 
-const Quality = () => {
-  const [searchParams] = useSearchParams();
+export default function Quality() {
   const navigate = useNavigate();
+  const {
+    page,
+    limit,
+    totalPages,
+    totalItems,
+    isLoading,
+    isError,
+    error,
+    currentPageData,
+    handlePageChange,
+  } = usePaginatedList({ queryHook: useGetQualityQuery, limit: 10 });
 
-  // Current page from URL
-  const page = parseInt(searchParams.get("page")) || 1;
-  const limit = 10;
-  const skip = (page - 1) * limit;
-
-  // Fetch qualities and types
-  const { data: qualitiesData, refetch } = useGetQualityQuery({ limit, skip });
   const { data: typesData } = useGetTypeQuery();
 
   // Delete mutation
-  const [deleteQuality] = useDeleteQualityMutation();
+  const [deleteQuality, { isLoading: isDeleting }] = useDeleteQualityMutation();
+
+  const handleDelete = async (id, name) => {
+    const result = await confirmDelete(name);
+    if (result) {
+      await deleteQuality(id).unwrap();
+    }
+  };
 
   // Map type_id -> type name
   const typeMap = React.useMemo(() => {
@@ -41,115 +53,109 @@ const Quality = () => {
     return map;
   }, [typesData]);
 
-  // Total pages
-  const totalItems = qualitiesData?.data?.total || 0;
-  const totalPages = Math.ceil(totalItems / limit);
-
-  // Change page
-  const handlePageChange = (newPage) => {
-    if (newPage >= 1 && newPage <= totalPages) {
-      navigate(`?page=${newPage}`);
-    }
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleDateString();
   };
 
-  // Delete handler with SweetAlert
-  const handleDelete = async (id) => {
-    Swal.fire({
-      title: "Are you sure?",
-      text: "You won’t be able to revert this!",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#d33",
-      cancelButtonColor: "#6c757d",
-      confirmButtonText: "Yes, delete it!",
-    }).then(async (result) => {
-      if (result.isConfirmed) {
-        try {
-          await deleteQuality(id).unwrap();
-          refetch();
-
-          Swal.fire({
-            title: "Deleted!",
-            text: "Quality has been deleted.",
-            icon: "success",
-            timer: 1500,
-            showConfirmButton: false,
-          });
-        } catch (error) {
-          Swal.fire({
-            title: "Error!",
-            text: "Failed to delete quality.",
-            icon: "error",
-          });
-          console.error("Failed to delete quality:", error);
-        }
-      }
-    });
-  };
+  if (isLoading)
+    return (
+      <div className="flex justify-center h-64 items-center">Loading…</div>
+    );
+  if (isError)
+    return (
+      <div className="flex justify-center h-64 items-center text-red-600">
+        {error?.data?.message || "Error loading types"}
+      </div>
+    );
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6 p-6">
       {/* Top Bar */}
-      <h1 className="flex items-center gap-2 text-xl font-semibold text-yellow-600 mt-5 mb-5">
-        <span onClick={() => navigate(-1)} className="cursor-pointer">
-          <ChevronLeftIcon />
-        </span>
-        Quality
-      </h1>
-
-      <div className="border-b-2"></div>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate(-1)}
+            className="h-8 w-8"
+          >
+            <ChevronLeftIcon className="h-5 w-5" />
+          </Button>
+          <h1 className="text-2xl font-bold text-gray-900">Quality Management</h1>
+          <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-sm">
+            {totalItems} types
+          </span>
+        </div>
+      </div>
 
       {/* Search */}
-      <div className="flex justify-between items-center mt-5">
-        <Input placeholder="Search" className="max-w-sm rounded-md" />
-        <Button className="bg-yellow-600 hover:bg-yellow-700 text-white rounded-md">
-          <Link to="/inventory/quality/create" className="flex items-center gap-2">
-            + Create
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-4 bg-white rounded-lg border">
+        <div className="w-full sm:w-auto">
+          <Input
+            placeholder="Search qualities..."
+            className="w-full sm:w-64 rounded-lg border-gray-300"
+          />
+        </div>
+        <Button className="bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg">
+          <Link
+            to="/inventory/quality/create"
+            className="flex items-center gap-2"
+          >
+            + Create New Quality
           </Link>
         </Button>
       </div>
 
-      <div className="border-b-2"></div>
-
       {/* Table */}
-      <PaginatedTable
-        columns={["No.", "Created Date", "Type Name", "Name", "Actions"]}
-        data={qualitiesData?.data || []}
-        page={page}
-        totalPages={totalPages}
-        onPageChange={handlePageChange}
-        renderRow={(item, index) => (
-          <tr key={item.id}>
-            <td>{skip + index + 1}.</td>
-            <td>{item.created_at?.split("T")[0]}</td>
-            <td>{typeMap[item.type_id] || "N/A"}</td>
-            <td>{item.name}</td>
-            <td>
-              {/* Edit */}
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-yellow-600 hover:text-yellow-700"
-                onClick={() => navigate(`/inventory/quality/update/${item.id}`)}
-              >
-                <SquarePenIcon size={30} />
-              </Button>
-
-              {/* Delete */}
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-[#EA0000] hover:text-[#EA0000]"
-                onClick={() => handleDelete(item.id)}
-              >
-                <Trash2Icon size={30} />
-              </Button>
-            </td>
-          </tr>
-        )}
-      />
+      <div className="bg-white rounded-lg border shadow-sm">
+        <PaginatedTable
+          columns={["No.", "Created Date", "Type Name", "Name", "Actions"]}
+          data={currentPageData || []}
+          page={page}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+          renderRow={(item, index) => (
+            <tr key={item.id} className="hover:bg-gray-50">
+              <td className="py-3 px-4 text-center">
+                {(page - 1) * limit + index + 1}
+              </td>
+              <td className="py-3 px-4 text-center">
+                {formatDate(item.created_at)}
+              </td>
+              <td className="py-3 px-4 text-center font-medium">
+                {typeMap[item.type_id] || "N/A"}
+              </td>
+              <td className="py-3 px-4 text-center font-medium">{item.name}</td>
+              <td className="py-3 px-4">
+                <div className="flex items-center justify-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                    onClick={() =>
+                      navigate(`/inventory/quality/update/${item.id}`)
+                    }
+                    title="Edit Quality"
+                  >
+                    <SquarePenIcon size={18} />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                    onClick={() => handleDelete(item.id, item.name)}
+                    disabled={isDeleting}
+                    title="Delete type"
+                  >
+                    <Trash2Icon size={18} />
+                  </Button>
+                </div>
+              </td>
+            </tr>
+          )}
+        />
+      </div>
     </div>
   );
-};
-
-export default Quality;
+}

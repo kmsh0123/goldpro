@@ -1,4 +1,4 @@
-import { CalendarCogIcon, ChartBar,ClipboardCopyIcon,ClipboardListIcon,FileTextIcon, Home as HomeIcon, Package, ShoppingCartIcon } from "lucide-react";
+import { BanknoteArrowDownIcon, BanknoteArrowUpIcon, CalendarCogIcon, ChartBar,CircleMinusIcon,CirclePlusIcon,ClipboardCopyIcon,ClipboardListIcon,CoinsIcon,FileTextIcon, Home as HomeIcon, Package, ShoppingCartIcon } from "lucide-react";
 
 const SidebarConfig = [
 {
@@ -110,10 +110,74 @@ const SidebarConfig = [
     ],
 },
 {
-    title: "Charts of Accounts",
-    url : "/coa/coa-list",
-    icon : FileTextIcon,
-    collapsible: false,
+    title: "Payments",
+    icon : CoinsIcon,
+    collapsible: true,
+    items: [
+         {
+            title: "Payment Category",
+            url: "/payment/payment-category-list",
+        },
+        {
+            title: "Payment List",
+            url: "/payment/payment-list",
+        },
+        // {
+        //     title: "Profit & Loss Report",
+        //     url: "/Expenses/profit-loss-report",
+        // },
+        // {
+        //     title: "Expense Report",
+        //     url: "/Expenses/expense-report",
+        // },
+    ],
+},
+{
+    title: "Expenses",
+    icon : BanknoteArrowDownIcon,
+    collapsible: true,
+    items: [
+         {
+            title: "Expense Category",
+            url: "/expense/expense-category-list",
+        },
+        {
+            title: "Expense List",
+            url: "/expense/expense-list",
+        },
+        // {
+        //     title: "Profit & Loss Report",
+        //     url: "/Expenses/profit-loss-report",
+        // },
+        // {
+        //     title: "Expense Report",
+        //     url: "/Expenses/expense-report",
+        // },
+    ],
+},
+
+{
+    title: "Incomes",
+    icon : BanknoteArrowUpIcon,
+    collapsible: true,
+    items: [
+         {
+            title: "Income Category",
+            url: "/income/income-category-list",
+        },
+        {
+            title: "Income List",
+            url: "/income/income-list",
+        },
+        // {
+        //     title: "Profit & Loss Report",
+        //     url: "/Expenses/profit-loss-report",
+        // },
+        // {
+        //     title: "Expense Report",
+        //     url: "/Expenses/expense-report",
+        // },
+    ],
 },
 ]
 
