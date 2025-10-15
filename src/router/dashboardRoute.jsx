@@ -1,6 +1,6 @@
 import NotFound from "@/pages/dashboard/NotFound.jsx";
 import Layout from "../components/dashboard/Layout.jsx";
-import Home from "@/pages/dashboard/Home.jsx";
+import Home from "@/pages/dashboard/dashboard/Home.jsx";
 import { Home as HomeIcon, Calendar } from "lucide-react";
 import Inventory from "@/pages/dashboard/Category.jsx";
 import Type from "@/pages/dashboard/inventory/Type/Type.jsx";
@@ -10,7 +10,6 @@ import Product from "@/pages/dashboard/inventory/Product/Product.jsx";
 import POS from "@/pages/dashboard/sale/Customer/POS/POS.jsx";
 import SaleList from "@/pages/dashboard/sale/SaleList.jsx";
 import SaleReport from "@/pages/dashboard/sale/SaleReport.jsx";
-import CustomerList from "@/pages/dashboard/sale/Customer/CustomerList.jsx";
 import PurchaseSystem from "@/pages/dashboard/purchase/POS/PurchaseSystem.jsx";
 import PurchaseList from "@/pages/dashboard/purchase/PurchaseList.jsx";
 import PurchaseReport from "@/pages/dashboard/purchase/PurchaseReport.jsx";
@@ -24,7 +23,6 @@ import CreateQuality from "@/pages/dashboard/inventory/Quality/CreateQuality.jsx
 import CreateCategory from "@/pages/dashboard/inventory/Category/CreateCategory.jsx";
 import CreateProduct from "@/pages/dashboard/inventory/Product/CreateProduct.jsx";
 import Stock from "@/pages/dashboard/stock/Stock.jsx";
-import CreateCustomer from "@/pages/dashboard/sale/Customer/CreateCustomer.jsx";
 import UpdateType from "@/pages/dashboard/inventory/Type/UpdateType.jsx";
 import UpdateQuality from "@/pages/dashboard/inventory/Quality/UpdateQuality.jsx";
 import UpdateCategory from "@/pages/dashboard/inventory/Category/UpdateCategory.jsx";
@@ -50,11 +48,26 @@ import UpdateIncomeCategory from "@/pages/dashboard/incomeCategory/UpdateIncomeC
 import UpdateExpense from "@/pages/dashboard/expense/UpdateExpense.jsx";
 import CreateIncome from "@/pages/dashboard/income/CreateIncome.jsx";
 import UpdateIncome from "@/pages/dashboard/income/UpdateIncome.jsx";
+import CreateSupplier from "@/pages/dashboard/purchase/CreateSupplier.jsx";
+import CashierList from "@/pages/dashboard/sale/Cashier/CashierList.jsx";
+import CreateCashier from "@/pages/dashboard/sale/Cashier/CreateCashier.jsx";
+import UpdateCashier from "@/pages/dashboard/sale/Cashier/UpdateCashier.jsx";
+import CustomerList from "@/pages/dashboard/sale/Customer/CustomerList.jsx";
+import CreateCustomer from "@/pages/dashboard/sale/Customer/CreateCustomer.jsx";
+import UpdateCustomer from "@/pages/dashboard/sale/Customer/UpdateCustomer.jsx";
+import IncomeReport from "@/pages/dashboard/reports/IncomeReport.jsx";
+import Login from "@/pages/dashboard/login/Login.jsx";
+import Damage from "@/pages/dashboard/damage/Damage.jsx";
+import AuthGuard from "@/Guard/AuthGuard.jsx";
 
 const dashboardRoute = [
+   {
+    path: "/login",
+    element: <Login />,
+  },
   {
     path: "/",
-    element: <Layout />,
+    element: <AuthGuard><Layout /></AuthGuard>,
     errorElement: <NotFound />,
     children: [
        {
@@ -316,7 +329,26 @@ const dashboardRoute = [
         path: "/sale/customer-list/create",
         element: <CreateCustomer/>,
       },
+      {
+        path: "/sale/customer-list/update/:id",
+        element: <UpdateCustomer/>,
+      },
       // SaleList
+
+      // CashierList
+      {
+        path: "/sale/cashier-list",
+        element: <CashierList />,
+      },
+       {
+        path: "/sale/cashier-list/create",
+        element: <CreateCashier/>,
+      },
+      {
+        path: "/sale/cashier-list/update/:id",
+        element: <UpdateCashier/>,
+      },
+      // CashierList
 
       // PurchaseList
       {
@@ -333,7 +365,7 @@ const dashboardRoute = [
       },
       {
         path: "/purchase/supplier-list/create",
-        element: <SupplierList />,
+        element: <CreateSupplier />,
       },
       // PurchaseList
 
@@ -354,8 +386,8 @@ const dashboardRoute = [
         element: <DailyPurchaseReport />,
       },
       {
-        path: "/reports/profit-loss-report",
-        element: <ProfitLossReport />,
+        path: "/reports/income-report",
+        element: <IncomeReport />,
       },
       {
         path: "/reports/expense-report",
@@ -396,6 +428,13 @@ const dashboardRoute = [
         element: <POS />,
   },
   //SaleList
+
+   //DamageList
+  {
+        path: "/damage/return",
+        element: <Damage />,
+  },
+  //DamageList
 
   //PurchaseList
 

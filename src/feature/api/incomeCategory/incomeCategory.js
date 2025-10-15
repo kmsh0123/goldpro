@@ -1,9 +1,19 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import Cookies from "js-cookie";
 
 export const incomeCategoryApi = createApi({
   reducerPath: "incomeCategoryApi",
   baseQuery: fetchBaseQuery({
     baseUrl: import.meta.env.VITE_API_ENDPOINT,
+    prepareHeaders: (headers) => {
+      const token = Cookies.get("token");
+      if (token) {
+        headers.set("Authorization", `Bearer ${token}`);
+      }
+      headers.set("Accept", "application/json");
+      headers.set("Content-Type", "application/json"); // ✅ json only
+      return headers;
+    },
   }),
   tagTypes: ["incomeCategoryApi"],
 
@@ -12,7 +22,7 @@ export const incomeCategoryApi = createApi({
       query: (formData) => ({
         url: `income/category/create`,
         method: "POST",
-        body : formData,
+        body: formData,
       }),
       invalidatesTags: ["incomeCategoryApi"],
     }),
@@ -31,10 +41,10 @@ export const incomeCategoryApi = createApi({
       providesTags: ["incomeCategoryApi"],
     }),
     editIncomeCategory: builder.mutation({
-      query: ({formData,id}) => ({
+      query: ({ formData, id }) => ({
         url: `income/category/update/${id}`,
         method: "PUT",
-        body : formData,
+        body: formData,
       }),
       invalidatesTags: ["incomeCategoryApi"],
     }),
@@ -56,5 +66,10 @@ export const incomeCategoryApi = createApi({
   }),
 });
 
-
-export const {useCreateIncomeCategoryMutation,useGetIncomeCateoryQuery,useEditIncomeCategoryMutation,useDeleteIncomeCateoryMutation,useGetDetailIncomeCateoryQuery} = incomeCategoryApi;
+export const {
+  useCreateIncomeCategoryMutation,
+  useGetIncomeCateoryQuery,
+  useEditIncomeCategoryMutation,
+  useDeleteIncomeCateoryMutation,
+  useGetDetailIncomeCateoryQuery,
+} = incomeCategoryApi;

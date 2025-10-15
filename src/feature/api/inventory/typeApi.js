@@ -1,15 +1,24 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import Cookies from "js-cookie";
 
 export const typeApi = createApi({
   reducerPath: "typeApi",
   baseQuery: fetchBaseQuery({
     baseUrl: import.meta.env.VITE_API_ENDPOINT,
-
+    prepareHeaders: (headers) => {
+      const token = Cookies.get("token");
+      if (token) {
+        headers.set("Authorization", `Bearer ${token}`);
+      }
+      headers.set("Accept", "application/json");
+      headers.set("Content-Type", "application/json"); // ✅ json only
+      return headers;
+    },
   }),
   tagTypes: ["typeApi"],
   endpoints: (builder) => ({
     getType: builder.query({
-      query: () => ({
+      query: (search) => ({
         // url: `/type/list?limit=${limit}&skip=${skip}`,
         url: `/type/list`,
         method: "GET",
@@ -33,7 +42,7 @@ export const typeApi = createApi({
       invalidatesTags: ["typeApi"],
     }),
     updateType: builder.mutation({
-      query: ({id,formData}) => ({
+      query: ({ id, formData }) => ({
         url: `type/update/${id}`,
         method: "PUT",
         body: formData,
@@ -60,5 +69,10 @@ export const typeApi = createApi({
   }),
 });
 
-export const {useGetTypeQuery,useCreateTypeMutation,useUpdateTypeMutation,useDeleteTypeMutation,useGetDetailTypeQuery} = typeApi;
-
+export const {
+  useGetTypeQuery,
+  useCreateTypeMutation,
+  useUpdateTypeMutation,
+  useDeleteTypeMutation,
+  useGetDetailTypeQuery,
+} = typeApi;

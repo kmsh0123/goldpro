@@ -13,14 +13,19 @@ import { ChevronLeftIcon } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import { Textarea } from "@/components/ui/textarea";
-import { useEditPaymentCategoryMutation, useGetDetailPaymentCategoryQuery, useGetPaymentCategoryQuery } from "@/feature/api/paymentCategory/paymentCategory";
-
+import {
+  useEditPaymentCategoryMutation,
+  useGetDetailPaymentCategoryQuery,
+  useGetPaymentCategoryQuery,
+} from "@/feature/api/paymentCategory/paymentCategory";
+import Cookies from "js-cookie";
 
 const UpdatePaymentCategory = () => {
+  const token = Cookies.get("token");
   const nav = useNavigate();
   const { id } = useParams();
   const [PaymentCategoryEdit] = useEditPaymentCategoryMutation();
-  const { data } = useGetDetailPaymentCategoryQuery(id);  
+  const { data } = useGetDetailPaymentCategoryQuery({id,token});
 
   const {
     register,
@@ -29,17 +34,18 @@ const UpdatePaymentCategory = () => {
     formState: { errors },
   } = useForm();
 
-    useEffect(() => {
-      if (data?.data) {
-        reset({
-          categoryName: data?.data?.category_name,
-        });
-      }
-    }, [data, reset]);
+  useEffect(() => {
+    if (data?.data) {
+      reset({
+        categoryName: data?.data?.category_name,
+        balance: data?.data?.balance,
+      });
+    }
+  }, [data, reset]);
 
   const handleEditPaymentCategory = async (formData) => {
     try {
-      const { data } = await PaymentCategoryEdit({formData, id});
+      const { data } = await PaymentCategoryEdit({ formData, id,token });
       console.log("Payment Category Updated successfully:", data);
       toast.success("Payment Category Updated successfully!");
       reset();
@@ -50,7 +56,7 @@ const UpdatePaymentCategory = () => {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 p-6">
       {/* Header */}
       <h1 className="flex items-center gap-2 text-xl font-semibold text-yellow-600 mt-5 mb-5">
         <span onClick={() => window.history.back()} className="cursor-pointer">
@@ -86,6 +92,17 @@ const UpdatePaymentCategory = () => {
           <Input
             placeholder="Enter Payment Category"
             {...register("categoryName")}
+            // value={name}
+            // onChange={(e) => setName(e.target.value)}
+            className="bg-[#ebebeb]"
+          />
+        </div>
+
+        <div>
+          <label className="block mb-1 font-medium">Payment Balance</label>
+          <Input
+            placeholder="Enter Payment Balance"
+            {...register("balance")}
             // value={name}
             // onChange={(e) => setName(e.target.value)}
             className="bg-[#ebebeb]"

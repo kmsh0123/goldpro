@@ -39,7 +39,7 @@ const CreatePaymentCategory = () => {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 p-6">
       {/* Header */}
       <h1 className="flex items-center gap-2 text-xl font-semibold text-yellow-600 mt-5 mb-5">
         <span onClick={() => window.history.back()} className="cursor-pointer">
@@ -75,6 +75,17 @@ const CreatePaymentCategory = () => {
           <Input
             placeholder="Enter Payment Category"
             {...register("categoryName")}
+            // value={name}
+            // onChange={(e) => setName(e.target.value)}
+            className="bg-[#ebebeb]"
+          />
+        </div>
+
+         <div>
+          <label className="block mb-1 font-medium">Payment Balance</label>
+          <Input
+            placeholder="Enter Payment Balance"
+            {...register("balance")}
             // value={name}
             // onChange={(e) => setName(e.target.value)}
             className="bg-[#ebebeb]"

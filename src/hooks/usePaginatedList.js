@@ -1,14 +1,14 @@
 import React from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
-export default function usePaginatedList({ queryHook, limit = 10 }) {
+export default function usePaginatedList({ queryHook, limit = 10 ,search = ""}) {
 const [searchParams] = useSearchParams()
   const navigate = useNavigate();
 //   const [page, setPage] = React.useState(1);
   const page = Number(searchParams.get("page")) || 1;
   const skip = (page - 1) * limit;
 
-  const { data, isLoading, isError, error } = queryHook();
+  const { data, isLoading, isError, error } = queryHook({ search, page, limit });
   const totalItems = data?.total || 0;
   const totalPages = Math.ceil(totalItems / limit);
 

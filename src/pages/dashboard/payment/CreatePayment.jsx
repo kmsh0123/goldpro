@@ -28,8 +28,10 @@ import {
 } from "@/components/ui/command";
 import { useCreatePaymentMutation } from "@/feature/api/paymentApi/paymentApi";
 import { useGetPaymentCategoryQuery } from "@/feature/api/paymentCategory/paymentCategory";
+import Cookies from "js-cookie";
 
 const CreatePayment = () => {
+  const token = Cookies.get("token");
   const nav = useNavigate();
   const [paymentCreate] = useCreatePaymentMutation();
   const [searchTerm, setSearchTerm] = useState("");
@@ -49,10 +51,7 @@ const CreatePayment = () => {
     },
   });
 
-  const { data: GetPayments } = useGetPaymentCategoryQuery();
-
-  console.log("GetPayments", GetPayments?.data);
-  
+  const { data: GetPayments } = useGetPaymentCategoryQuery(token);  
 
   const selectedPaymentId = watch("paymentCatId");
 
@@ -67,7 +66,7 @@ const CreatePayment = () => {
 
   const handleCreatePayment = async (formData) => {
     try {
-      const { data } = await paymentCreate(formData);
+      const { data } = await paymentCreate({formData,token});
       console.log("Payment created successfully:", data);
       toast.success("Payment created successfully!");
       reset();
@@ -78,7 +77,7 @@ const CreatePayment = () => {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 p-6">
       {/* Header */}
       <h1 className="flex items-center gap-2 text-xl font-semibold text-yellow-600 mt-5 mb-5">
         <span onClick={() => window.history.back()} className="cursor-pointer">

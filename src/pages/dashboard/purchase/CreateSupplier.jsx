@@ -10,9 +10,9 @@ import {
 } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeftIcon } from "lucide-react";
-import { useCreateCustomerMutation } from "@/feature/api/saleApi/customerApi";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
+import { useCreateSupplierMutation } from "@/feature/api/supplierApi/supplierApi";
 
 // Helper function to convert KPY to grams
 const kpyToGram = (kyat, pae, yway) => {
@@ -35,7 +35,7 @@ const gramToKPY = (gramValue) => {
 };
 
 const CreateSupplier = () => {
-  const [coaCustomer] = useCreateCustomerMutation();
+  const [createSupplier] = useCreateSupplierMutation();
   const nav = useNavigate();
   const [remainingGold, setRemainingGold] = useState({
     kyat: "",
@@ -104,14 +104,14 @@ const CreateSupplier = () => {
         remainingGram: Number(remainingGold.gram) || 0
       };
       
-      const {data} = await coaCustomer(formDataWithGold);
-      console.log("Customer created successfully:", data);
-      toast.success("Customer created successfully!");
+      const {data} = await createSupplier(formDataWithGold);
+      console.log("Supplier created successfully:", data);
+      toast.success("Supplier created successfully!");
       reset();
-      nav("/sale/customer-list");
+      nav("/purchase/supplier-list");
     } catch (error) {
-      console.error("Error create customer", error);
-      toast.error("Error creating customer");
+      console.error("Error create supplier", error);
+      toast.error("Error creating supplier");
     } 
   };
 
@@ -122,7 +122,7 @@ const CreateSupplier = () => {
         <span onClick={() => window.history.back()} className="cursor-pointer">
           <ChevronLeftIcon />
         </span>
-        Create Customer
+        Create Supplier
       </h1>
 
       <div className="border-b-2"></div>
@@ -148,7 +148,7 @@ const CreateSupplier = () => {
           <label className="block mb-1 font-medium">Code</label>
           <Input
             placeholder="Enter Code"
-            {...register("customerCode")}
+            {...register("supplierCode")}
             className="bg-gray-100"
           />
         </div>
@@ -158,7 +158,7 @@ const CreateSupplier = () => {
           <label className="block mb-1 font-medium">Name</label>
           <Input
             placeholder="Enter Name"
-            {...register("customerName")}
+            {...register("supplierName")}
             className="bg-gray-100"
           />
         </div>
@@ -168,7 +168,7 @@ const CreateSupplier = () => {
           <label className="block mb-1 font-medium">Phone</label>
           <Input
             placeholder="Enter Phone"
-            {...register("customerPhone")}
+            {...register("supplierPhone")}
             className="bg-gray-100"
           />
         </div>
@@ -178,7 +178,7 @@ const CreateSupplier = () => {
           <label className="block mb-1 font-medium">Address</label>
           <Input
             placeholder="Enter Address"
-            {...register("customerAddress")}
+            {...register("supplierAddress")}
             className="bg-gray-100"
           />
         </div>

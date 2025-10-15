@@ -23,90 +23,109 @@ import {
 import { useGetProductQuery } from "@/feature/api/inventory/productApi";
 import PaginatedTable from "@/components/dashboard/ResuableComponents/PaginatedTable";
 import { useGetSupplierQuery } from "@/feature/api/supplierApi/supplierApi";
+import usePaginatedList from "@/hooks/usePaginatedList";
 
 const SupplierList = () => {
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  // Current page from URL
-  const page = parseInt(searchParams.get("page")) || 1;
-  const limit = 10;
-  const skip = (page - 1) * limit;
+  const {
+    page,
+    limit,
+    totalPages,
+    totalItems,
+    isLoading,
+    isError,
+    error,
+    currentPageData,
+    handlePageChange,
+  } = usePaginatedList({ queryHook: useGetSupplierQuery, limit: 10 });
 
-  // Fetch products
-  const { data: GetSupplier } = useGetSupplierQuery();
-
-  // Total pages
-  const totalItems = GetSupplier?.total || 0;
-  const totalPages = Math.ceil(totalItems / limit);
-
-  // Change page
-  const handlePageChange = (newPage) => {
-    if (newPage >= 1 && newPage <= totalPages) {
-      navigate(`?page=${newPage}`);
-    }
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleDateString();
   };
 
-  // Render dynamic page numbers
-
+  if (isLoading)
+    return (
+      <div className="flex justify-center h-64 items-center">Loading…</div>
+    );
+  if (isError)
+    return (
+      <div className="flex justify-center h-64 items-center text-red-600">
+        {error?.data?.message || "Error loading types"}
+      </div>
+    );
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 p-6">
       {/* Top Bar */}
-      <h1 className="flex items-center gap-2 text-xl font-semibold text-yellow-600 mt-5 mb-5">
-        <span onClick={() => window.history.back()} className="cursor-pointer">
-          <ChevronLeftIcon />
-        </span>
-        SupplierList
-      </h1>
-
-      <div className="border-b-2"></div>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate(-1)}
+            className="h-8 w-8"
+          >
+            <ChevronLeftIcon className="h-5 w-5" />
+          </Button>
+          <h1 className="text-2xl font-bold text-gray-900">Supplier List</h1>
+          <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-sm">
+            {totalItems} suppliers
+          </span>
+        </div>
+      </div>
 
       {/* Search */}
-      <div className="flex justify-between items-center mt-5">
-        <Input
-          placeholder="Search"
-          className="max-w-sm rounded-md bg-[#EBEBEB]"
-        />
-        <Button className="bg-yellow-600 hover:bg-yellow-700 text-white rounded-md">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-4 bg-white rounded-lg border">
+        <div className="w-full sm:w-auto">
+          <Input
+            placeholder="Search qualities..."
+            className="w-full sm:w-64 rounded-lg border-gray-300"
+          />
+        </div>
+        <Button className="bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg">
           <Link
-            to="/sale/customer-list/create"
+            to="/purchase/supplier-list/create"
             className="flex items-center gap-2"
           >
-            + Create
+            + Create New Supplier
           </Link>
         </Button>
       </div>
-
-      <div className="border-b-2"></div>
-
-     <PaginatedTable
-        columns={["No.", "Date", "Supplier Name", "Actions"]}
-        data={GetSupplier?.data || []}
-        page={page}
-        totalPages={totalPages}
-        onPageChange={handlePageChange}
-        renderRow={(item, index) => (
-          <tr key={item.id}>
-            <td>{skip + index + 1}.</td>
-            <td>
-              {item.created_at
-                ? new Date(item.created_at).toISOString().split("T")[0]
-                : ""}
-            </td>
-            <td>{item.supplier_name}</td>
-            <td>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-yellow-600 hover:text-yellow-700"
-              >
-                <Pencil size={30} />
-              </Button>
-            </td>
-          </tr>
-        )}
-      />
+      <div className="bg-white rounded-lg border">
+        <PaginatedTable
+          columns={["No.", "Date", "Supplier Name", "Actions"]}
+          data={currentPageData || []}
+          page={page}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+          renderRow={(item, index) => (
+            <tr key={item.id}>
+              <td className="py-3 px-4 text-center">
+                {(page - 1) * limit + index + 1}
+              </td>
+              <td className="py-3 px-4 text-center font-medium">
+                {formatDate(item.created_at)}
+              </td>
+              <td className="py-3 px-4 text-center font-medium">
+                {item.supplier_name}
+              </td>
+              <td className="py-3 px-4">
+                <div className="flex items-center justify-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-yellow-600 hover:text-yellow-700"
+                  >
+                    <Pencil size={30} />
+                  </Button>
+                </div>
+              </td>
+            </tr>
+          )}
+        />
+      </div>
     </div>
   );
 };

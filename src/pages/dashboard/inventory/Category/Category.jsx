@@ -1,148 +1,275 @@
-import React from 'react'
-import { ChevronLeftIcon, EyeIcon, FilePenLineIcon, Pencil, SquarePenIcon, Trash2Icon } from "lucide-react";
+import React, { useState } from "react";
+import {
+  ChevronLeftIcon,
+  EyeIcon,
+  FilePenLineIcon,
+  Pencil,
+  SquarePenIcon,
+  Trash2Icon,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Table, TableHeader, TableRow, TableHead, TableCell, TableBody } from "@/components/ui/table";
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { useDeleteCategoryMutation, useGetCategoryQuery } from '@/feature/api/inventory/categoryApi';
-import PaginatedTable from '@/components/dashboard/ResuableComponents/PaginatedTable';
-import Swal from 'sweetalert2';
-
+import {
+  Table,
+  TableHeader,
+  TableRow,
+  TableHead,
+  TableCell,
+  TableBody,
+} from "@/components/ui/table";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import {
+  useDeleteCategoryMutation,
+  useGetCategoryQuery,
+} from "@/feature/api/inventory/categoryApi";
+import PaginatedTable from "@/components/dashboard/ResuableComponents/PaginatedTable";
+import Swal from "sweetalert2";
+import usePaginatedList from "@/hooks/usePaginatedList";
+import { confirmDelete } from "@/lib/confirmDelete";
+import { getCSVExportConfig } from "@/lib/exportToCSV";
+import { exportToPDF } from "@/lib/exportToPDF";
+import ExportButtons from "@/components/dashboard/ResuableComponents/ExportButtons";
+import DateRangePicker from "@/components/dashboard/ResuableComponents/DateRangePicker";
 
 const Category = () => {
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const [filteredData, setFilteredData] = useState([]);
+  const [isFiltered, setIsFiltered] = useState(false);
+  const [searchText, setSearchText] = useState("");
   
-    // Current page from URL
-    const page = parseInt(searchParams.get("page")) || 1;
-    const limit = 10;
-    const skip = (page - 1) * limit;
-  
-    // Fetch products
-    const { data: GetProducts } = useGetCategoryQuery({ limit, skip });
-    const [deleteCategory] = useDeleteCategoryMutation()
-    console.log("GetProducts", GetProducts);
-  
-    // Total pages
-    const totalItems = GetProducts?.data?.total || 0;
-    const totalPages = Math.ceil(totalItems / limit);
-  
-    // Change page
-    const handlePageChange = (newPage) => {
-      if (newPage >= 1 && newPage <= totalPages) {
-        navigate(`?page=${newPage}`);
-      }
-    };
+  const {
+    page,
+    limit,
+    totalPages,
+    totalItems,
+    isLoading,
+    isError,
+    error,
+    currentPageData,
+    handlePageChange,
+  } = usePaginatedList({ queryHook: useGetCategoryQuery, limit: 10 });
 
-    const handleDelete = async (id) => {
-        Swal.fire({
-          title: "Are you sure?",
-          text: "You won’t be able to revert this!",
-          icon: "warning",
-          showCancelButton: true,
-          confirmButtonColor: "#d33",
-          cancelButtonColor: "#6c757d",
-          confirmButtonText: "Yes, delete it!",
-        }).then(async (result) => {
-          if (result.isConfirmed) {
-            try {
-              await deleteCategory(id).unwrap();
-              // refetch();
-    
-              Swal.fire({
-                title: "Deleted!",
-                text: "Quality has been deleted.",
-                icon: "success",
-                timer: 1500,
-                showConfirmButton: false,
-              });
-            } catch (error) {
-              Swal.fire({
-                title: "Error!",
-                text: "Failed to delete quality.",
-                icon: "error",
-              });
-              console.error("Failed to delete quality:", error);
-            }
-          }
-        });
-      };
+  // Current page from URL
+
+  // Fetch products
+  // Delete mutation
+  const [deleteCategory, { isLoading: isDeleting }] =
+    useDeleteCategoryMutation();
+
+  const displayData = isFiltered ? filteredData : currentPageData;
+
+  const handleDelete = async (id, name) => {
+    const result = await confirmDelete(name);
+    if (result) {
+      await deleteCategory(id).unwrap();
+    }
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleDateString();
+  };
+
+  const csvHeaders = [
+    { label: "No.", key: "no" },
+    { label: "Created Date", key: "created_at" },
+    { label: "Code", key: "code" },
+    { label: "Category Name", key: "name" },
+  ];
+
+  // Prepare CSV data
+  const csvData =
+    displayData?.map((item, index) => ({
+      no: (page - 1) * limit + index + 1,
+      created_at: new Date(item.created_at)?.toLocaleString("en-MM"),
+      code: item.code || "N/A",
+      name: item.name || "-",
+      // payment_cat_id: item.payment_cat_id || "-",
+      // expense_amount: item.expense_amount || "-",
+      // expense_note: item.expense_note || "-",
+      // expense_for: item.expense_for || "-",
+    })) || [];
+
+  // Build CSV Config (Reusable Utility)
+  const csvConfig = getCSVExportConfig(csvData, csvHeaders, "category.csv");
+
+  const handleExportPDF = () => {
+    const columns = ["No.", "Created Date", "Code", "Category Name"];
+    const rows = csvData.map((d) => [
+      d.no,
+      d.created_at,
+      d.code,
+      d.name,
+      // d.expense_amount,
+      // d.expense_note,
+    ]);
+
+    exportToPDF({
+      title: "Category List",
+      columns,
+      rows,
+      fileName: "Category.pdf",
+    });
+  };
+
+  const handleDateChange = (range) => {
+    if (!range) {
+      setFilteredData([]);
+      setIsFiltered(false);
+      return;
+    }
+
+    const from = new Date(range.from);
+    const to = new Date(range.to);
+    to.setHours(23, 59, 59, 999);
+
+     let filtered = displayData?.filter((item) => {
+      const createdAt = new Date(item.created_at);
+      return createdAt >= from && createdAt <= to;
+    });
+
+     if (searchText.trim() !== "") {
+    filtered = filtered.filter((item) =>
+      item.name.toLowerCase().includes(searchText.toLowerCase())
+    );
+  }
+
+    setFilteredData(filtered);
+    setIsFiltered(true);
+  };
+
+   const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setSearchText(value);
+
+    // Apply filtering
+    const filtered = currentPageData.filter((item) =>
+      item.name.toLowerCase().includes(value.toLowerCase())
+    );
+    setFilteredData(filtered);
+    setIsFiltered(value.trim() !== "" || isFiltered); // keep filter active if search or date filter applied
+  };
+
+  if (isLoading)
+    return (
+      <div className="flex justify-center h-64 items-center">Loading…</div>
+    );
+  if (isError)
+    return (
+      <div className="flex justify-center h-64 items-center text-red-600">
+        {error?.data?.message || "Error loading types"}
+      </div>
+    );
 
   return (
-      <div className="space-y-4">
+    <div className="space-y-4 p-6">
       {/* Top Bar */}
-         <h1 className="flex items-center gap-2 text-xl font-semibold text-yellow-600 mt-5 mb-5">
-          <span onClick={() => window.history.back()} className="cursor-pointer">
-          <ChevronLeftIcon/>
-         </span>
-         Category
-         </h1>
-
-         <div className="border-b-2"></div>
-        
-
-      {/* Search */}
-      <div className='flex justify-between items-center mt-5'>
-      <Input placeholder="Search" className="max-w-sm rounded-md" />
-        <Button className="bg-yellow-600 hover:bg-yellow-700 text-white rounded-md">
-          <Link to="/inventory/category/create" className="flex items-center gap-2">
-            + Create
-          </Link>
-        </Button>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate(-1)}
+            className="h-8 w-8"
+          >
+            <ChevronLeftIcon className="h-5 w-5" />
+          </Button>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Category Management
+          </h1>
+          <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-sm">
+            {totalItems} categories
+          </span>
+        </div>
       </div>
 
-         <div className="border-b-2"></div>
-
+      {/* Search */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-4 bg-white rounded-lg border">
+        <div className="flex items-center gap-5">
+          <div className="w-full sm:w-auto">
+            <Input
+              placeholder="Search qualities..."
+              className="w-full sm:w-64 rounded-lg border-gray-300"
+              value={searchText}
+              onChange={handleSearchChange}
+            />
+          </div>
+          <div>
+            <DateRangePicker
+              label="Filter by Date"
+              onChange={handleDateChange}
+            />
+          </div>
+        </div>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <Button className="bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg">
+            <Link
+              to="/inventory/category/create"
+              className="flex items-center gap-2"
+            >
+              + Create New Category
+            </Link>
+          </Button>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 cursor-pointer">
+            <ExportButtons
+              csvConfig={csvConfig}
+              onPdfExport={handleExportPDF}
+            />
+          </div>
+        </div>
+      </div>
 
       {/* Table */}
       {/* <Card className="overflow-hidden p-5"> */}
-       <PaginatedTable
-        columns={["No.", "Created Date","Code", "Name", "Actions"]}
-        data={GetProducts?.data || []}
-        page={page}
-        totalPages={totalPages}
-        onPageChange={handlePageChange}
-        renderRow={(item, index) => (
-          <tr key={item.id}>
-            <td>{skip + index + 1}.</td>
-            <td>{(item.created_at)?.split("T")[0]}</td>
-            <td>{item.code}</td>
-            <td>{item.name}</td>
-            <td>
-              {/* Edit */}
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-yellow-600 hover:text-yellow-700"
-                onClick={() => navigate(`/inventory/category/update/${item.id}`)}
-              >
-                <SquarePenIcon size={30} />
-              </Button>
+      <div className="bg-white rounded-lg border shadow-sm">
+        <PaginatedTable
+          columns={["No.", "Created Date", "Code", "Name", "Actions"]}
+          data={isFiltered ? filteredData : currentPageData || []}
+          page={page}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+          renderRow={(item, index) => (
+            <tr key={item.id} className="hover:bg-gray-50">
+              <td className="py-3 px-4 text-center">
+                {(page - 1) * limit + index + 1}
+              </td>
+              <td className="py-3 px-4 text-center font-medium">
+                {formatDate(item.created_at)}
+              </td>
+              <td className="py-3 px-4 text-center font-medium">{item.code}</td>
+              <td className="py-3 px-4 text-center font-medium">{item.name}</td>
+              <td className="py-3 px-4">
+                {/* Edit */}
+                <div className="flex items-center justify-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                    onClick={() =>
+                      navigate(`/inventory/category/update/${item.id}`)
+                    }
+                  >
+                    <SquarePenIcon size={30} />
+                  </Button>
 
-              {/* Delete */}
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-[#EA0000] hover:text-[#EA0000]"
-                onClick={() => handleDelete(item.id)}
-              >
-                <Trash2Icon size={30} />
-              </Button>
-              {/* <Button
-                variant="ghost"
-                size="icon"
-                className="text-[#00C02A] hover:text-[#00C02A]"
-                onClick={() => navigate(`/coa/coa-detail/${item.id}`)}
-              >
-                <EyeIcon size={30} />
-              </Button> */}
-            </td>
-          </tr>
-        )}
-      />
+                  {/* Delete */}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-[#EA0000] hover:text-[#EA0000]"
+                    onClick={() => handleDelete(item.id)}
+                  >
+                    <Trash2Icon size={30} />
+                  </Button>
+                </div>
+              </td>
+            </tr>
+          )}
+        />
+      </div>
       {/* </Card> */}
     </div>
-  )
-}
+  );
+};
 
 export default Category;

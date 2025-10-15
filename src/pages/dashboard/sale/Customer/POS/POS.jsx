@@ -20,6 +20,7 @@ import {
 } from "@/feature/service/cartSlice";
 import html2canvas from "html2canvas-pro";
 import jsPDF from "jspdf";
+import { useNavigate } from "react-router-dom";
 
 // Helper function to normalize KPY values (handle carry-over)
 const normalizeKPY = (kyat, pae, yway) => {
@@ -148,6 +149,7 @@ const POS = () => {
   const printRef = useRef(null);
   const [createOrder, { isLoading }] = useCreateOrderMutation();
   const dispatch = useDispatch();
+  const nav = useNavigate();
 
   const {
     items,
@@ -158,10 +160,15 @@ const POS = () => {
     payment,
     laathk,
     cash,
+    cashies,
     discount,
     convert24,
     discountPayments,
   } = useSelector((state) => state.cart);
+
+  console.log(items, "items:");
+
+  console.log(payments, "payments:");
 
   // console.log("Cart state:", {
   //   items,
@@ -340,13 +347,15 @@ const POS = () => {
 
   // Replace your existing calculateTotalPaymentsInGrams with this version
   const calculateTotalPaymentsInGrams = () => {
-    // console.log("calculateTotalPaymentsInGrams called");
-    if ((!payments || payments.length === 0) && (!cash || Number(cash) <= 0)) {
-      // no payments and no cash entered
+    // no payments and no cashies
+    if (
+      (!payments || payments.length === 0) &&
+      (!cashies || cashies.length === 0)
+    ) {
       return 0;
     }
 
-    // Sum payments array (K/P/Y -> grams)
+    // 1) payments array (K/P/Y -> grams)
     const totalPayments = (payments || []).reduce(
       (total, payment) => ({
         kyat: total.kyat + (Number(payment?.kyat) || 0),
@@ -357,36 +366,77 @@ const POS = () => {
       { kyat: 0, pae: 0, yway: 0, gram: 0 }
     );
 
-    // Convert payments K/P/Y to grams
     const paymentsGramsFromKPY = kpyToGram(
       totalPayments.kyat,
       totalPayments.pae,
       totalPayments.yway
     );
 
-    // Also include any explicit gram value stored in payment objects (if any)
-    const paymentsExtraGram = totalPayments.gram || 0;
-
-    // Convert entered cash (Ks) to grams using today's rate
+    // 2) cashies (Ks) -> convert to grams:
+    //    gram = (Ks / todayRate) * 16.6   (only if todayRate > 0)
     const todayRateLocal = Number(items?.[0]?.todayRate) || 0;
-    let cashGrams = 0;
-    if (Number(cash) && Number(cash) > 0 && todayRateLocal > 0) {
-      const converted = convertCashToKPY(Number(cash), todayRateLocal);
-      // convertCashToKPY already returns gram (number)
-      cashGrams = Number(converted.gram) || 0;
+
+    let cashiesGrams = 0;
+    if (todayRateLocal > 0) {
+      cashiesGrams = (cashies || []).reduce((s, c) => {
+        const ks = Number(c?.cash) || 0;
+        // convert Ks -> kyatOfGold -> grams
+        const kyatValue = ks / todayRateLocal; // kyat fractional
+        return s + kyatValue * 16.6;
+      }, 0);
+    } else {
+      // if rate not available, we cannot convert Ks -> grams reliably
+      // treat cashiesGrams as 0 (or handle differently based on your UX)
+      cashiesGrams = 0;
     }
 
-    const total = paymentsGramsFromKPY + paymentsExtraGram + cashGrams;
-
-    // console.log("calculateTotalPaymentsInGrams result:", {
-    //   paymentsGramsFromKPY,
-    //   paymentsExtraGram,
-    //   cashGrams,
-    //   total,
-    // });
+    // 3) sum everything (payments (grams) + cashies (grams))
+    const total = paymentsGramsFromKPY + cashiesGrams;
 
     return total;
   };
+
+  //   const calculateTotalPaymentsInGrams = () => {
+  //   if ((!payments || payments.length === 0) && (!cash || Number(cash) <= 0)) {
+  //     return { kyat: 0, pae: 0, yway: 0 };
+  //   }
+
+  //   // Step 1: Sum all payments (K/P/Y)
+  //   const totalPayments = (payments || []).reduce(
+  //     (total, payment) => ({
+  //       kyat: total.kyat + (Number(payment?.kyat) || 0),
+  //       pae: total.pae + (Number(payment?.pae) || 0),
+  //       yway: total.yway + (Number(payment?.yway) || 0),
+  //     }),
+  //     { kyat: 0, pae: 0, yway: 0 }
+  //   );
+
+  //   // Step 2: cash ကို Kyat/Pae/Yway ပြောင်းမယ် (gram မသုံးတော့)
+  //   const todayRateLocal = Number(items?.[0]?.todayRate) || 0;
+  //   let cashKPY = { kyat: 0, pae: 0, yway: 0 };
+
+  //   if (Number(cash) && Number(cash) > 0 && todayRateLocal > 0) {
+  //     const converted = convertCashToKPY(Number(cash), todayRateLocal);
+  //     // convertCashToKPY မှာ Kyat/Pae/Yway ပြန်ပေးအောင် ပြင်ထားရမယ်
+  //     cashKPY = {
+  //       kyat: Number(converted.kyat) || 0,
+  //       pae: Number(converted.pae) || 0,
+  //       yway: Number(converted.yway) || 0,
+  //     };
+  //   }
+
+  //   // Step 3: payments + cash ကိုပေါင်းမယ်
+  //   const total = {
+  //     kyat: totalPayments.kyat + cashKPY.kyat,
+  //     pae: totalPayments.pae + cashKPY.pae,
+  //     yway: totalPayments.yway + cashKPY.yway,
+  //   };
+
+  //   // Step 4: overflow handle (e.g. 16 pae = 1 kyat, 8 yway = 1 pae)
+  //   let final = normalizeKPY(total);
+
+  //   return final;
+  // };
 
   // Calculate total discount payments in grams (negative values add, positive values subtract)
   const calculateTotalDiscountPaymentsInGrams = () => {
@@ -458,13 +508,16 @@ const POS = () => {
         : goldKyatValue * 16.6;
 
     const totalPaymentsGrams = calculateTotalPaymentsInGrams() || 0;
+
+    console.log("totalPaymentsGrams:", totalPaymentsGrams);
+
     const totalDiscountPaymentsGrams =
       calculateTotalDiscountPaymentsInGrams() || 0;
 
     // formula: (previous + gold) - (payments - discounts)
     let totalRemainingGrams =
       prevGram + goldGram - totalPaymentsGrams - totalDiscountPaymentsGrams;
-    if (totalRemainingGrams < 0) totalRemainingGrams = 0;
+    // if (totalRemainingGrams < 0) totalRemainingGrams = 0;
 
     console.log("totalRemainingGrams:", totalRemainingGrams);
 
@@ -604,14 +657,11 @@ const POS = () => {
   };
 
   const handleConfirmOrder = async () => {
-    // console.log("handleConfirmOrder called");
     if (!items || items.length === 0) {
-      // console.log("No items in cart!");
       alert("No items in cart!");
       return;
     }
 
-    // Calculate the NEW remaining balance after payment
     const newRemainingBalance = calculateRemainingGold();
 
     const payload = {
@@ -619,96 +669,96 @@ const POS = () => {
       voucherCode: items[0]?.voucherCode || "N/A",
       customerId: items[0]?.customerId || 1,
       totalQuantity: items.reduce((sum, i) => sum + (Number(i.qty) || 1), 0),
-      // Combined Total (Previous Balance + Gold 24K)
+
+      // Totals
       totalKyat: Number(calculateCombinedTotal()?.kyat) || 0,
       totalPae: Number(calculateCombinedTotal()?.pae) || 0,
       totalYway: Number(calculateCombinedTotal()?.yway) || 0,
       totalGram: Number(calculateCombinedTotal()?.gram) || 0,
       totalPrice: items.reduce((sum, i) => sum + Number(i.price || 0), 0),
-      todayRate: Number(items[0]?.todayRate) || 0,
-      // Payment section
-      // paymentKyat: Number(payment?.kyat) || 0,
-      // paymentPae: Number(payment?.pae) || 0,
-      // paymentYway: Number(payment?.yway) || 0,
-      // paymentGram: Number(payment?.gram) || 0,
-      // paymentCash: Number(cash) || 0,
+      // Sale date
+      orderDate: items[0]?.orderDate,
 
-      paymentKyat: convertCashToKPY(Number(cash), todayRate).kyat || 0,
-      paymentPae: convertCashToKPY(Number(cash), todayRate).pae || 0,
-      paymentYway: convertCashToKPY(Number(cash), todayRate).yway || 0,
-      paymentGram: convertCashToKPY(Number(cash), todayRate).gram || 0,
-      paymentCash: Number(cash) || 0,
+      todayRate: Number(todayRate) || 0,
+      cashierId: items[0]?.cashierId || 1,
 
-      //  //Convert24K
-      // discountKyat: Number(discount?.kyat) || 0,
-      // discountPae: Number(discount?.pae) || 0,
-      // discountYway: Number(discount?.yway) || 0,
-      // discountGram: Number(discount?.gram) || 0,
-      // discountCash: Number(discount?.cash) || 0,
+      // Discounts
+      discountKyat: Number(calculateTotalDiscount()?.kyat) || 0,
+      discountPae: Number(calculateTotalDiscount()?.pae) || 0,
+      discountYway: Number(calculateTotalDiscount()?.yway) || 0,
+      discountGram: Number(calculateTotalDiscount()?.gram) || 0,
+      discountCash: Number(calculateTotalDiscount()?.cash) || 0,
 
-      // Discount section
-      discountKyat: Number(discount?.kyat) || 0,
-      discountPae: Number(discount?.pae) || 0,
-      discountYway: Number(discount?.yway) || 0,
-      discountGram: Number(discount?.gram) || 0,
-      discountCash: Number(discount?.cash) || 0,
-
-      // NEW: Save the calculated remaining balance, not the original
-      remainingKyat: Number(newRemainingBalance?.kyat) || 0,
-      remainingPae: Number(newRemainingBalance?.pae) || 0,
-      remainingYway: Number(newRemainingBalance?.yway) || 0,
-      remainingGram: Number(newRemainingBalance?.gram) || 0,
-      // Gold 24K total
+      // 24K conversion total
       total24KKyat: Number(calculateTotalConvert24K()?.kyat) || 0,
       total24KPae: Number(calculateTotalConvert24K()?.pae) || 0,
       total24KYway: Number(calculateTotalConvert24K()?.yway) || 0,
       total24KGram: Number(calculateTotalConvert24K()?.gram) || 0,
+
+      // Remaining balance
+      remainingKyat: Number(newRemainingBalance?.kyat) || 0,
+      remainingPae: Number(newRemainingBalance?.pae) || 0,
+      remainingYway: Number(newRemainingBalance?.yway) || 0,
+      remainingGram: Number(newRemainingBalance?.gram) || 0,
+
+      // Payment array
+      paymentGold: payments.map((p) => ({
+        qualityId: Number(p.qualityId) || 0,
+        paymentKyat: Number(p.paymentKyat) || 0,
+        paymentPae: Number(p.paymentPae) || 0,
+        paymentYway: Number(p.paymentYway) || 0,
+        paymentGram: Number(p.paymentGram) || 0,
+      })),
+
+       paymentMoney: cashies.map((c) => ({
+        paymentCatId: Number(c.paymentCatId) || 0,
+        paymentAmount: Number(c.cash) || 0,
+      })),
+
+      // cash: cashies.map((c) => ({
+      //   paymentCatId: cashies.map((c) => c.paymentCatName),
+      //   paymentAmount: cashies.reduce(
+      //     (sum, c) => sum + (Number(c.cash) || 0),
+      //     0
+      //   ),
+      // })),
+
+      // Items array
       items: items.map((i) => ({
-        productId: i.productId || 0,
-        typeId: i.typeId || 0,
-        qualityId: i.qualityId || 0,
-        categoryId: i.categoryId || 0,
+        productId: Number(i.productId) || 0,
+        typeId: Number(i.typeId) || 0,
+        qualityId: Number(i.qualityId) || 0,
+        categoryId: Number(i.categoryId) || 0,
         quantity: Number(i.qty) || 0,
-        // အလျော့တွက် (Alyaut)
-        yautKyat: Number(i.alyautKyat) || 0,
-        yautPae: Number(i.alyautPae) || 0,
-        yautYway: Number(i.alyautYway) || 0,
-        yautGram: Number(i.alyautGram) || 0,
-        // ရွှေချိန် (Shwe)
-        shweKyat: Number(i.kyat) || 0,
-        shwePae: Number(i.pae) || 0,
-        shweYway: Number(i.yway) || 0,
-        shweGram: Number(i.gram) || 0,
-        // Payment for this item
-        paymentKyat: Number(i.paymentKyat) || 0,
-        paymentPae: Number(i.payPae) || 0,
-        paymentYway: Number(i.payYway) || 0,
-        paymentGram: Number(i.payGram) || 0,
-        paymentCash: Number(cash) || 0,
-        // Discount for this item
-        discountKyat: Number(discount?.kyat) || 0,
-        discountPae: Number(discount?.pae) || 0,
-        discountYway: Number(discount?.yway) || 0,
-        discountGram: Number(discount?.gram) || 0,
-        discountCash: Number(discountPayments) || 0,
-        // Total for this item
-        totalKyat: Number(i.kyat) || 0,
-        totalPae: Number(i.pae) || 0,
-        totalYway: Number(i.yway) || 0,
-        totalGram: Number(i.gram) || 0,
-        totalPrice: Number(i.price) || 0,
+
+        // Alyaut (Yaut)
+        yautKyat: Number(i.yautKyat) || 0,
+        yautPae: Number(i.yautPae) || 0,
+        yautYway: Number(i.yautYway) || 0,
+        yautGram: Number(i.yautGram) || 0,
+
+        // Shwe (Gold)
+        shweKyat: Number(i.shweKyat) || 0,
+        shwePae: Number(i.shwePae) || 0,
+        shweYway: Number(i.shweYway) || 0,
+        shweGram: Number(i.shweGram) || 0,
+
+        totalKyat: Number(i.totalKyat) || 0,
+        totalPae: Number(i.totalPae) || 0,
+        totalYway: Number(i.totalYway) || 0,
+        totalGram: Number(i.totalGram) || 0,
+        totalPrice: Number(i.totalPrice) || 0,
       })),
     };
 
-    // console.log("Order payload:", payload);
-
     try {
       const result = await createOrder(payload).unwrap();
-      // console.log("Order created successfully:", result);
-      alert("Order created successfully!");
+      alert("✅ Order created successfully!");
+      nav("/sale/sale-list")
+      dispatch(clearCart());
     } catch (error) {
       console.error("Order creation failed:", error);
-      alert("Order failed: " + (error.message || "Unknown error"));
+      alert("❌ Order failed: " + (error.message || "Unknown error"));
     }
   };
 
@@ -717,9 +767,9 @@ const POS = () => {
     dispatch(removeCart(index));
   };
 
-  const handleDeletePayment = () => {
+  const handleDeletePayment = (idx) => {
     // Clear the list of added payments
-    dispatch(resetPayments());
+    dispatch(resetPayments(idx));
     dispatch(resetconvert24());
   };
 
@@ -802,7 +852,7 @@ const POS = () => {
       netKyat,
       netPae,
       netYway,
-      Number(item.karat || 24)
+      parseFloat(item.karat || 24)
     );
     let convert24KDetail = convertToKPY(convert24KValue);
 
@@ -982,7 +1032,7 @@ const POS = () => {
         netKPY.kyat,
         netKPY.pae,
         netKPY.yway,
-        Number(item.karat || 24)
+        parseFloat(item.karat || 24)
       );
 
       let convert24KDetail = convertToKPY(totalKyatValue);
@@ -1016,16 +1066,22 @@ const POS = () => {
     // calculateTotalPaymentsInGrams should account for `cash`)
     const paymentsGrams = calculateTotalPaymentsInGrams() || 0;
     const todayRateForConversion = Number(items?.[0]?.todayRate) || 0;
-    let paymentsKsFromArray = 0;
-    if (paymentsGrams > 0 && todayRateForConversion > 0) {
-      paymentsKsFromArray = (paymentsGrams / 16.6) * todayRateForConversion;
-    }
+    // let paymentsKsFromArray = 0;
+    // if (paymentsGrams > 0 && todayRateForConversion > 0) {
+    //   paymentsKsFromArray = (paymentsGrams / 16.6) * todayRateForConversion;
+    // }
+
+    // console.log(paymentsKsFromArray,"paymentsKsFromArray:");
+
+    const sumCashies = (cashies || []).reduce(
+      (s, c) => s + (Number(c?.cash) || 0),
+      0
+    );
 
     // 4) direct cash entered by user (Ks) -> use directly (do NOT convert round-trip)
 
     // 5) final total: base - discount - (payments from array) - (cash input)
-    const finalTotalCash =
-      baseTotalCash - totalDiscountCash - paymentsKsFromArray;
+    const finalTotalCash = baseTotalCash - totalDiscountCash - sumCashies;
 
     console.log(finalTotalCash, "finalTotalCash:");
 
@@ -1139,7 +1195,7 @@ const POS = () => {
       }),
       { kyat: 0, pae: 0, yway: 0, gram: 0, cash: 0 }
     );
-    // console.log("calculateTotalDiscount result:", result);
+    console.log("calculateTotalDiscount result:", result);
     return result;
   };
 
@@ -1177,6 +1233,7 @@ const POS = () => {
       pdf.save("examplepdf.pdf");
       alert("Order confirm success! PDF downloaded.");
       dispatch(clearCart());
+      nav("/sale/sale-list");
     } catch (error) {
       alert("Something went wrong while generating PDF.");
     }
@@ -1204,9 +1261,10 @@ const POS = () => {
           <div className="text-sm space-y-1 mb-4">
             <p>Voucher Code: {items[0]?.voucherCode || ""}</p>
             <p>Customer Name: {items[0]?.customerName || ""}</p>
+            <p>Cashier Name: {items[0]?.cashierName || ""}</p>
             <p>Today Gold Rate: {items[0]?.todayRate || 0} Kyats</p>
-            <p>Date: {new Date().toLocaleDateString()}</p>
-            <p>Time: {new Date().toLocaleTimeString()}</p>
+            <p>Date: {items[0]?.orderDate || 0}</p>
+            {/* <p>Time: {new Date().toLocaleTimeString()}</p> */}
           </div>
 
           {/* Invoice Table */}
@@ -1495,7 +1553,7 @@ const POS = () => {
                         {idx + 1}
                       </td>
                       <td className="border p-1 text-center font-bold">
-                        Payment
+                        Payment {p.qualityName}
                       </td>
                       <td className="border p-1"></td>
                       <td className="border p-1"></td>
@@ -1548,7 +1606,7 @@ const POS = () => {
 
                 {/* )} */}
 
-                <tr>
+                {/* <tr>
                   <td className="border p-1"></td>
                   <td className="border p-1 text-center font-bold">
                     Payment (Cash)
@@ -1572,7 +1630,44 @@ const POS = () => {
                       2
                     ) || 0}
                   </td>
-                </tr>
+                </tr> */}
+
+                {cashies &&
+                  cashies.length > 0 &&
+                  cashies.map((c, idx) => {
+                    const converted = convertCashToKPY(
+                      Number(c.cash || 0),
+                      todayRate
+                    );
+                    return (
+                      <tr key={`cashie-${idx}`}>
+                        <td className="border p-1 text-center font-bold">
+                          {idx + 1}
+                        </td>
+                        <td className="border p-1 text-center font-bold">
+                          Payment {c.paymentCatName || "Cash"}
+                        </td>
+                        <td className="border p-1"></td>
+                        <td className="border p-1"></td>
+
+                        {/* show cash amount (Ks) */}
+                        <td className="border p-1" colSpan={13}>
+                          ငွေပမာဏ: {Number(c.cash || 0).toLocaleString()}{" "}
+                          Ks
+                        </td>
+
+                        {/* converted to K/P/Y/Gram */}
+                        <td className="border p-1">{converted.kyat || 0}</td>
+                        <td className="border p-1">{converted.pae || 0}</td>
+                        <td className="border p-1">{converted.yway || 0}</td>
+                        <td className="border p-1">
+                          {converted.gram
+                            ? Number(converted.gram).toFixed(2)
+                            : "0.00"}
+                        </td>
+                      </tr>
+                    );
+                  })}
 
                 {/* Discount Payment Row */}
                 {/* {discountPayments && discountPayments.length > 0 && ( */}
@@ -1600,7 +1695,6 @@ const POS = () => {
                   <td className="border p-1" colSpan={4}></td>
                   <td className="border p-1" colSpan={4}></td>
                   <td className="border p-1" colSpan={4}></td>
-                  {/* //Delete Button */}
                   {discountPayments && discountPayments.length > 0 && (
                     <td className="border p-1">
                       <Button
@@ -1623,7 +1717,7 @@ const POS = () => {
                   <td className="border p-1" colSpan={19}>
                     {calculateTotalCash()
                       ? calculateTotalCash().toLocaleString()
-                      : 0}{" "}
+                      : 0}
                     Ks
                   </td>
                 </tr>

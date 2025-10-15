@@ -17,15 +17,21 @@ import { incomeApi } from '../api/incomeApi/incomeApi'
 import { incomeCategoryApi } from '../api/incomeCategory/incomeCategory'
 import { paymentCategoryApi } from '../api/paymentCategory/paymentCategory'
 import { paymentApi } from '../api/paymentApi/paymentApi'
+import { cashierApi } from '../api/saleApi/cashierApi'
+import { LoginApi } from '../api/loginApi/LoginApi'
+import authSlice from '../service/authSlice'
+import { damageApi } from '../api/damageApi/damageApi'
 
 export const store = configureStore({
   reducer: {
+    [LoginApi.reducerPath]: LoginApi.reducer,
     [productApi.reducerPath]: productApi.reducer,
     [typeApi.reducerPath]: typeApi.reducer,
     [qualityApi.reducerPath]: qualityApi.reducer,
     [categoryApi.reducerPath]: categoryApi.reducer,
     [subCoaApi.reducerPath]: subCoaApi.reducer,
     [customerApi.reducerPath]: customerApi.reducer,
+    [cashierApi.reducerPath]: cashierApi.reducer,
     [stockApi.reducerPath]: stockApi.reducer,
     [supplierApi.reducerPath]: supplierApi.reducer,
     [posApi.reducerPath]: posApi.reducer,
@@ -36,17 +42,21 @@ export const store = configureStore({
     [incomeCategoryApi.reducerPath]: incomeCategoryApi.reducer,
     [paymentCategoryApi.reducerPath]: paymentCategoryApi.reducer,
     [paymentApi.reducerPath]: paymentApi.reducer,
+    [damageApi.reducerPath]: damageApi.reducer,
+    auth:authSlice,
     cart: cartSlice,
     payment : paymentSlice,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
+      LoginApi.middleware,
       productApi.middleware,
       typeApi.middleware,
       qualityApi.middleware,
       categoryApi.middleware,
       subCoaApi.middleware,
       customerApi.middleware,
+      cashierApi.middleware,
       stockApi.middleware,
       supplierApi.middleware,
       posApi.middleware,
@@ -57,6 +67,7 @@ export const store = configureStore({
       incomeCategoryApi.middleware,
       paymentCategoryApi.middleware,
       paymentApi.middleware,
+      damageApi.middleware,
     ),
 
   })

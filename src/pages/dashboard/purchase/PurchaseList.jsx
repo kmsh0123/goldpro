@@ -1,13 +1,41 @@
-import React from 'react'
-import { ArrowUpFromDotIcon, ArrowUpFromLineIcon, ChevronLeftIcon, EyeIcon, FilePenLineIcon, ImageIcon, Pencil, SquarePenIcon, Trash2Icon, Type } from "lucide-react";
+import React from "react";
+import {
+  ArrowUpFromDotIcon,
+  ArrowUpFromLineIcon,
+  ChevronLeftIcon,
+  EyeIcon,
+  FilePenLineIcon,
+  ImageIcon,
+  Pencil,
+  SquarePenIcon,
+  Trash2Icon,
+  Type,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Table, TableHeader, TableRow, TableHead, TableCell, TableBody } from "@/components/ui/table";
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import PaginatedTable from '@/components/dashboard/ResuableComponents/PaginatedTable';
-import { useGetOrderQuery } from '@/feature/api/posApi/posApi';
-import { useGetPurchaseQuery } from '@/feature/api/purchaseApi/purchaseApi';
+import {
+  Table,
+  TableHeader,
+  TableRow,
+  TableHead,
+  TableCell,
+  TableBody,
+} from "@/components/ui/table";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import PaginatedTable from "@/components/dashboard/ResuableComponents/PaginatedTable";
+import { useGetOrderQuery } from "@/feature/api/posApi/posApi";
+import { useGetPurchaseQuery } from "@/feature/api/purchaseApi/purchaseApi";
+import { getCSVExportConfig } from "@/lib/exportToCSV";
+import ExportButtons from "@/components/dashboard/ResuableComponents/ExportButtons";
+import usePaginatedList from "@/hooks/usePaginatedList";
+import { exportToPDF } from "@/lib/exportToPDF";
 
 // const data = [
 //   { id: 1, date: "6/6/2025", name: "Gold", quality : "24K", gram: "10g", price: "$500" },
@@ -17,49 +45,102 @@ import { useGetPurchaseQuery } from '@/feature/api/purchaseApi/purchaseApi';
 // ];
 
 const PurchaseList = () => {
-  const [searchParams] = useSearchParams();
-    const navigate = useNavigate();
-    
-      // Current page from URL
-      const page = parseInt(searchParams.get("page")) || 1;
-      const limit = 10;
-      const skip = (page - 1) * limit;
-    
-      // Fetch products
-      const { data: GetProducts } = useGetPurchaseQuery();
-  
-      console.log("GetProducts", GetProducts);
+  const navigate = useNavigate();
+  const {
+    page,
+    limit,
+    totalPages,
+    totalItems,
+    isLoading,
+    isError,
+    error,
+    currentPageData,
+    handlePageChange,
+  } = usePaginatedList({ queryHook: useGetPurchaseQuery, limit: 10 });
 
-      
-      
-    
-      // Total pages
-      const totalItems = GetProducts?.data?.total || 0;
-      const totalPages = Math.ceil(totalItems / limit);
-    
-      // Change page
-      const handlePageChange = (newPage) => {
-        if (newPage >= 1 && newPage <= totalPages) {
-          navigate(`?page=${newPage}`);
-        }
-      };
-    
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleDateString();
+  };
+
+  const csvHeaders = [
+    { label: "No.", key: "no" },
+    { label: "Supplier", key: "supplier" },
+    { label: "Voucher Code", key: "voucher_no" },
+    { label: "Purchase Code", key: "purchase_code" },
+    { label: "Quantity", key: "total_quantity" },
+    { label: "Sale Date", key: "purchase_date" },
+  ];
+
+  // Prepare CSV data
+  const csvData =
+    currentPageData?.map((item, index) => ({
+      no: (page - 1) * limit + index + 1,
+      purchase_date: new Date(item.purchase_date)?.toLocaleString("en-MM"),
+      // expense_cat_id: getCategoryName(item.expense_cat_id),
+      supplier: item.supplier || "-",
+      voucher_no: item.voucher_no || "-",
+      purchase_code: item.purchase_code || "-",
+      total_quantity: item.total_quantity || "-",
+      // purchase_date: item.purchase_date || "-",
+      // expense_for: item.expense_for || "-",
+    })) || [];
+
+  // Build CSV Config (Reusable Utility)
+  const csvConfig = getCSVExportConfig(csvData, csvHeaders, "saleList.csv");
+
+  const handleExportPDF = () => {
+    const columns = [
+      "No.",
+      "supplier",
+      "Voucher Code",
+      "Purchase Code",
+      "Quantity",
+      "Sale Date",
+    ];
+    const rows = csvData.map((d) => [
+      d.no,
+      d.supplier,
+      d.voucher_no,
+      d.purchase_code,
+      d.total_quantity,
+      d.purchase_date,
+    ]);
+
+    exportToPDF({
+      title: "Sale List",
+      columns,
+      rows,
+      fileName: "sale-list.pdf",
+    });
+  };
+
+  if (isLoading)
+    return (
+      <div className="flex justify-center h-64 items-center">Loading…</div>
+    );
+  if (isError)
+    return (
+      <div className="flex justify-center h-64 items-center text-red-600">
+        {error?.data?.message || "Error loading types"}
+      </div>
+    );
+
   return (
-      <div className="space-y-4">
+    <div className="space-y-4 p-6">
       {/* Top Bar */}
-         <h1 className="flex items-center gap-2 text-xl font-semibold text-yellow-600 mt-5 mb-5">
-          <span onClick={() => window.history.back()} className="cursor-pointer">
-          <ChevronLeftIcon/>
-         </span>
-         Sale List
-         </h1>
+      <h1 className="flex items-center gap-2 text-xl font-semibold text-yellow-600 mt-5 mb-5">
+        <span onClick={() => window.history.back()} className="cursor-pointer">
+          <ChevronLeftIcon />
+        </span>
+        Sale List
+      </h1>
 
-         <div className="border-b-2"></div>
-        
+      <div className="border-b-2"></div>
 
       {/* Search */}
-      <div className='flex justify-between items-center mt-5'>
-       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="flex justify-between items-center mt-5">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <div className="w-full">
             <label className="block mb-1 font-medium">Product Code</label>
             <Select className>
@@ -106,75 +187,71 @@ const PurchaseList = () => {
             </Select>
           </div>
         </div>
-        <Button className="bg-yellow-600 hover:bg-yellow-700 text-white rounded-md">
-          {/* <Link to="/inventory/product/create" className="flex items-center gap-2">
-            + Create
-          </Link> */}
-          <ArrowUpFromLineIcon/>
-          Export
-        </Button>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 cursor-pointer">
+          <ExportButtons csvConfig={csvConfig} onPdfExport={handleExportPDF} />
+        </div>
       </div>
 
-         <div className="border-b-2"></div>
-
+      <div className="border-b-2"></div>
 
       {/* Table */}
       {/* <Card className="overflow-hidden p-5"> */}
+      <div className="bg-white rounded-lg border">
         <PaginatedTable
-        // columns={["No.", "Voucher Code", "Name", "Quantity","Type", "Quality", "Categories", "Weight","Sale Date", "Actions"]}
-        columns={["No.","Supplier", "Voucher Code", "Quantity","Sale Date", "Actions"]}
-        data={GetProducts?.data || []}
-        page={page}
-        totalPages={totalPages}
-        onPageChange={handlePageChange}
-        renderRow={(item, index) => (
-          <tr key={item.id}>
-            <td>{skip + index + 1}.</td>
-             <td>
-              {item.supplier}
-            </td>
-            <td>
-              {item.purchase_code}
-            </td>
-            <td>{item.total_quantity}</td>
-            {/* <td>{item.created_at}</td> */}
-            <td>{new Date(item.created_at).toLocaleString()}</td>
-            {/* <td>{item.type}</td>
-            <td>{item.type}</td>
-            <td>{item.type}</td>
-            <td>{item.type}</td>
-            <td>{item.type}</td> */}
-            <td>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-yellow-600 hover:text-yellow-700"
-                onClick={() => navigate(`/coa/coa-edit/${item.id}`)}
-              >
-                <SquarePenIcon size={30} />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-[#EA0000] hover:text-[#EA0000]"
-              >
-                <Trash2Icon size={30} />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-[#00C02A] hover:text-[#00C02A]"
-                onClick={() => navigate(`/coa/coa-detail/${item.id}`)}
-              >
-                <EyeIcon size={30} />
-              </Button>
-            </td>
-          </tr>
-        )}
-      />
+          columns={[
+            "No.",
+            "supplier",
+            "Voucher Code",
+            "purchase Code",
+            "Quantity",
+            "Sale Date",
+            "Actions",
+          ]}
+          data={currentPageData || []}
+          page={page}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+          renderRow={(item, index) => (
+            <tr key={item.id}>
+              <td className="py-3 px-4 text-center">
+                {(page - 1) * limit + index + 1}
+              </td>
+              <td className="py-3 px-4 text-center font-medium">
+                {item.supplier}
+              </td>
+              <td className="py-3 px-4 text-center font-medium">
+                {item.voucher_no}
+              </td>
+              <td className="py-3 px-4 text-center font-medium">
+                {item.purchase_code}
+              </td>
+              <td className="py-3 px-4 text-center font-medium">
+                {item.total_quantity}
+              </td>
+              <td className="py-3 px-4 text-center font-medium">
+                {formatDate(item.purchase_date)}
+              </td>
+              <td className="py-3 px-4">
+                <div className="flex items-center justify-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-[#00C02A] hover:text-[#00C02A]"
+                    onClick={() =>
+                      navigate(`/sale/sale-list/detail/${item.id}`)
+                    }
+                  >
+                    <EyeIcon size={30} />
+                  </Button>
+                </div>
+              </td>
+            </tr>
+          )}
+        />
+      </div>
       {/* </Card> */}
     </div>
-  )
-}
+  );
+};
 
-export default PurchaseList
+export default PurchaseList;

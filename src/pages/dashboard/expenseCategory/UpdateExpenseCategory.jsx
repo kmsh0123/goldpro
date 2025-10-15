@@ -50,7 +50,7 @@ const UpdateExpenseCategory = () => {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 p-6">
       {/* Header */}
       <h1 className="flex items-center gap-2 text-xl font-semibold text-yellow-600 mt-5 mb-5">
         <span onClick={() => window.history.back()} className="cursor-pointer">

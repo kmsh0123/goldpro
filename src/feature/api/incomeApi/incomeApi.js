@@ -1,9 +1,19 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import Cookies from "js-cookie";
 
 export const incomeApi = createApi({
   reducerPath: "incomeApi",
   baseQuery: fetchBaseQuery({
     baseUrl: import.meta.env.VITE_API_ENDPOINT,
+    prepareHeaders: (headers) => {
+  const token = Cookies.get("token");
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
+  headers.set("Accept", "application/json");
+  headers.set("Content-Type", "application/json"); // ✅ json only
+  return headers;
+}
   }),
   tagTypes: ["incomeApi"],
 
@@ -28,9 +38,6 @@ export const incomeApi = createApi({
         url: `income/update/${payload?.id}`,
         method: "PUT",
         body : payload,
-         headers: {
-          Accept: "application/json",
-        },
       }),
       invalidatesTags: ["incomeApi"],
     }),

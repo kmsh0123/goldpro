@@ -118,3 +118,10 @@
     @apply bg-background text-foreground;
   }
 }
+
+.pie {
+  width: 600px !important;
+  height: 600px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}

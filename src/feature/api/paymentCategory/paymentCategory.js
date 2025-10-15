@@ -1,9 +1,19 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import Cookies from "js-cookie";
 
 export const paymentCategoryApi = createApi({
   reducerPath: "paymentCategoryApi",
   baseQuery: fetchBaseQuery({
     baseUrl: import.meta.env.VITE_API_ENDPOINT,
+    prepareHeaders: (headers) => {
+      const token = Cookies.get("token");
+      if (token) {
+        headers.set("Authorization", `Bearer ${token}`);
+      }
+      headers.set("Accept", "application/json");
+      headers.set("Content-Type", "application/json");
+      return headers;
+    },
   }),
   tagTypes: ["paymentCategoryApi"],
 
@@ -12,7 +22,7 @@ export const paymentCategoryApi = createApi({
       query: (formData) => ({
         url: `payment/category/create`,
         method: "POST",
-        body : formData,
+        body: formData,
       }),
       invalidatesTags: ["paymentCategoryApi"],
     }),
@@ -31,10 +41,10 @@ export const paymentCategoryApi = createApi({
       providesTags: ["paymentCategoryApi"],
     }),
     editPaymentCategory: builder.mutation({
-      query: ({id,formData}) => ({
+      query: ({ id, formData }) => ({
         url: `payment/category/update/${id}`,
         method: "PUT",
-        body : formData,
+        body: formData,
       }),
       invalidatesTags: ["paymentCategoryApi"],
     }),
@@ -56,5 +66,10 @@ export const paymentCategoryApi = createApi({
   }),
 });
 
-
-export const {useCreatePaymentCategoryMutation,useGetPaymentCategoryQuery,useEditPaymentCategoryMutation,useDeletePaymentCategoryMutation,useGetDetailPaymentCategoryQuery} = paymentCategoryApi;
+export const {
+  useCreatePaymentCategoryMutation,
+  useGetPaymentCategoryQuery,
+  useEditPaymentCategoryMutation,
+  useDeletePaymentCategoryMutation,
+  useGetDetailPaymentCategoryQuery,
+} = paymentCategoryApi;

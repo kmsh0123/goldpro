@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
+import { format, set } from "date-fns";
 import {
   Select,
   SelectTrigger,
@@ -39,6 +40,7 @@ import {
   setConverto24K,
   add24KConvert,
   resetconvert24K,
+  addCashies,
 } from "@/feature/service/cartSlice";
 import { useGetCustomerQuery } from "@/feature/api/saleApi/customerApi";
 import { Controller, useForm } from "react-hook-form";
@@ -47,14 +49,21 @@ import { addToPayment } from "@/feature/service/paymentSlice";
 import { useGetTypeQuery } from "@/feature/api/inventory/typeApi";
 import { useGetQualityQuery } from "@/feature/api/inventory/qualityApi";
 import { useGetCategoryQuery } from "@/feature/api/inventory/categoryApi";
+import { useGetPaymentCategoryQuery } from "@/feature/api/paymentCategory/paymentCategory";
+import { Label } from "@/components/ui/label";
+import { ChevronDownIcon } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { useGetCashierQuery } from "@/feature/api/saleApi/cashierApi";
 
 const POSLeft = () => {
   const [searchProductName, setSearchProductName] = useState("");
   const [searchCustomerName, setSearchCustomerName] = useState("");
+  const [searchCashierName, setSearchCashierName] = useState("");
   const [searchTypeName, setSearchTypeName] = useState("");
   const [searchQuality, setSearchQuality] = useState("");
   const [searchQualityTwo, setSearchQualityTwo] = useState("");
   const [searchCategory, setSearchCategory] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
   const [productWeight, setProductWeight] = useState({
     kyat: "",
     pae: "",
@@ -68,10 +77,14 @@ const POSLeft = () => {
   const [qty, setQty] = useState("");
   const [openProduct, setOpenProduct] = useState(false);
   const [openCustomer, setOpenCustomer] = useState(false);
+  const [openCashier, setOpenCashier] = useState(false);
   const [openType, setOpenType] = useState(false);
   const [openQuality, setOpenQuality] = useState(false);
   const [openQualityTwo, setOpenQualityTwo] = useState(false);
   const [openCategory, setOpenCategory] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [openDate, setOpenDate] = React.useState(false);
+  const [date, setDate] = useState();
 
   const dispatch = useDispatch();
   const { kyat, pae, yway, gram } = useSelector(
@@ -85,8 +98,6 @@ const POSLeft = () => {
     gram: alyautGram,
   } = useSelector((state) => state.cart.alyut);
 
-  
-
   const {
     kyat: payKyat,
     pae: payPae,
@@ -94,7 +105,7 @@ const POSLeft = () => {
     gram: payGram,
   } = useSelector((state) => state.cart.payment);
 
-   const {
+  const {
     kyat: convert24Kyat,
     pae: convert24Pae,
     yway: convert24Yway,
@@ -129,15 +140,19 @@ const POSLeft = () => {
 
   const { data: GetProducts } = useGetProductQuery();
   const { data: GetCustomer } = useGetCustomerQuery();
+  const { data: GetCashier } = useGetCashierQuery();
   const { data: GetType } = useGetTypeQuery();
   const { data: GetQuality } = useGetQualityQuery();
   const { data: GetCategory } = useGetCategoryQuery();
+  const { data: GetPayments } = useGetPaymentCategoryQuery();
 
   const selectedProductId = watch("productId");
   const selectedCustomerId = watch("customerId");
+  const selectedCashierId = watch("cashierId");
   const selectedTypeId = watch("typeId");
   const selectedQualityId = watch("qualityId");
   const selectedCategoryId = watch("categoryId");
+  const selectedPaymentId = watch("paymentCatId");
 
   const selectedProductName =
     GetProducts?.data?.find((item) => item.id.toString() === selectedProductId)
@@ -147,7 +162,16 @@ const POSLeft = () => {
     (item) => item.id.toString() === selectedCustomerId
   );
 
+   const selectedCashier = GetCashier?.data?.find(
+    (item) => item.id.toString() === selectedCashierId
+  );
+
+  const selectedPaymentName =
+    GetPayments?.data?.find((item) => item.id.toString() === selectedPaymentId)
+      ?.category_name || "";
+
   const selectedCustomerName = selectedCustomer?.customer_name || "";
+  const selectedCashierName = selectedCashier?.cashier_name || "";
   const customerCode = selectedCustomer?.customer_code || "";
   const remainingKyat = selectedCustomer?.remaining_kyat || 0;
   const remainingPae = selectedCustomer?.remaining_pae || 0;
@@ -192,6 +216,10 @@ const POSLeft = () => {
     item.customer_name.toLowerCase().includes(searchCustomerName.toLowerCase())
   );
 
+  const filteredCashiers = GetCashier?.data?.filter((item) =>
+    item.cashier_name.toLowerCase().includes(searchCashierName.toLowerCase())
+  );
+
   const filteredType = GetType?.data?.filter((item) =>
     item.name.toLowerCase().includes(searchTypeName.toLowerCase())
   );
@@ -208,37 +236,41 @@ const POSLeft = () => {
     item.name.toLowerCase().includes(searchCategory.toLowerCase())
   );
 
+  const filteredPayments = GetPayments?.data?.filter((item) =>
+    item.category_name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   const kyatPaeYwayToGram = (kyat, pae, yway) => {
-  const totalKyat =
-    (parseFloat(kyat) || 0) +
-    (parseFloat(pae) || 0) / 16 +
-    (parseFloat(yway) || 0) / 128;
-  return totalKyat * 16.6; // Round grams to integer
-};
+    const totalKyat =
+      (parseFloat(kyat) || 0) +
+      (parseFloat(pae) || 0) / 16 +
+      (parseFloat(yway) || 0) / 128;
+    return totalKyat * 16.6; // Round grams to integer
+  };
 
-// const gramToKyatPaeYway = (gram) => {
-//   let totalKyat = gram / 16.6;
+  // const gramToKyatPaeYway = (gram) => {
+  //   let totalKyat = gram / 16.6;
 
-//   const kyat = Math.floor(totalKyat);
-//   totalKyat -= kyat;
+  //   const kyat = Math.floor(totalKyat);
+  //   totalKyat -= kyat;
 
-//   const pae = Math.floor(totalKyat * 16);
-//   const yway = Math.floor((totalKyat * 16 - pae) * 8);
+  //   const pae = Math.floor(totalKyat * 16);
+  //   const yway = Math.floor((totalKyat * 16 - pae) * 8);
 
-//   return { kyat, pae, yway };
-// }
+  //   return { kyat, pae, yway };
+  // }
 
-const gramToKyatPaeYway = (gram) => {
-  let totalKyat = gram / 16.6;
+  const gramToKyatPaeYway = (gram) => {
+    let totalKyat = gram / 16.6;
 
-  const kyat = Math.floor(totalKyat);
-  totalKyat -= kyat;
+    const kyat = Math.floor(totalKyat);
+    totalKyat -= kyat;
 
-  const pae = Math.floor(totalKyat * 16);
-  const yway = (totalKyat * 16 - pae) * 8; // keep decimal for yway
+    const pae = Math.floor(totalKyat * 16);
+    const yway = (totalKyat * 16 - pae) * 8; // keep decimal for yway
 
-  return { kyat, pae, yway: parseFloat(yway.toFixed(2)) };
-};
+    return { kyat, pae, yway: parseFloat(yway.toFixed(2)) };
+  };
   const handleChange = (field, value) => {
     let newValue = value;
 
@@ -259,14 +291,14 @@ const gramToKyatPaeYway = (gram) => {
 
   const handleAlyautChange = (field, value) => {
     if (field === "gram") {
-      const { kyat, pae, yway } = gramToKyatPaeYway(parseFloat(value) || 0);      
+      const { kyat, pae, yway } = gramToKyatPaeYway(parseFloat(value) || 0);
       dispatch(setAlyut({ kyat, pae, yway, gram: value }));
     } else {
       const newState = {
         kyat: alyautKyat,
         pae: alyautPae,
         yway: alyautYway,
-        gram: alyautGram
+        gram: alyautGram,
       };
       newState[field] = value;
       const newGram = kyatPaeYwayToGram(
@@ -274,7 +306,7 @@ const gramToKyatPaeYway = (gram) => {
         newState.pae,
         newState.yway
       );
-      dispatch(setAlyut({ ...newState, gram: newGram }));      
+      dispatch(setAlyut({ ...newState, gram: newGram }));
     }
   };
 
@@ -299,7 +331,7 @@ const gramToKyatPaeYway = (gram) => {
     }
   };
 
-   const handleConvert24Change = (field, value) => {
+  const handleConvert24Change = (field, value) => {
     if (field === "gram") {
       const { kyat, pae, yway } = gramToKyatPaeYway(parseFloat(value) || 0);
       dispatch(setConverto24K({ kyat, pae, yway, gram: value }));
@@ -353,21 +385,34 @@ const gramToKyatPaeYway = (gram) => {
     dispatch(setGoldLaathk(value));
   };
 
+
+
+
+
+
   const handleAdd = () => {
     const selectedQuality = GetQuality?.data?.find(
       (q) => q.id.toString() === selectedQualityId
     );
+
+    // const selectedPayment = GetPayments?.data?.find(
+    //   (q) => q.id.toString() === selectedPaymentId
+    // );
 
     const newItem = {
       productId: selectedProductId,
       typeId: selectedTypeId,
       qualityId: selectedQualityId,
       qualityName: selectedQuality?.name || "",
+      // paymentCatId: selectedPaymentId,
+      // paymentCatName: selectedPayment?.category_name || "",
       karat: selectedQuality?.name?.replace("K", "") || 24,
       categoryId: selectedCategoryId,
       productName: selectedProductName,
       customerName: selectedCustomerName,
       customerId: selectedCustomerId,
+      cashierId: selectedCashierId,
+      cashierName: selectedCashierName,
       customerCode: customerCode,
       // Add remaining balance data
       remainingKyat: Number(remainingKyat) || 0,
@@ -387,24 +432,13 @@ const gramToKyatPaeYway = (gram) => {
       alyautYway,
       alyautGram,
 
-      paymentKyat: Number(payKyat) || 0,
-      paymentPae: Number(payPae) || 0,
-      paymentYway: Number(payYway) || 0,
-      paymentGram: Number(payGram) || 0,
-      paymentCash: Number(cash) || 0,
-
-      discountKyat: Number(discountKyat) || 0,
-      discountPae: Number(discountPae) || 0,
-      discountYway: Number(discountYway) || 0,
-      discountGram: Number(discountGram) || 0,
-      discountCash: Number(discountcash) || 0,
-
       Convert24KKyat: Number(convert24Kyat) || 0,
       Convert24KPae: Number(convert24Pae) || 0,
       Convert24KYway: Number(convert24Yway) || 0,
       Convert24KGram: Number(convert24Gram) || 0,
-      
+
       laathk: parseFloat(laathk) || 0,
+      orderDate: date ? format(date, "yyyy-MM-dd HH:mm:ss") : null,
     };
 
     dispatch(addToCart(newItem));
@@ -414,25 +448,53 @@ const gramToKyatPaeYway = (gram) => {
     dispatch(resetGoldWeight());
     dispatch(resetAlyutWeight());
     setQty("");
-    console.log(newItem);
-    
+    console.log(newItem, "newItem:");
   };
 
   const handlePayment = () => {
+    const selectedQuality = GetQuality?.data?.find(
+      (q) => q.id.toString() === selectedQualityId
+    );
+
+
     dispatch(
       addPayment({
         kyat: payKyat,
         pae: payPae,
         yway: payYway,
         gram: payGram,
-        cash,
+        // cash,
+        qualityName: selectedQuality?.name || "",
+        // paymentCatName: selectedPayment?.category_name || "",
+        paymentKyat: Number(payKyat) || 0,
+        paymentPae: Number(payPae) || 0,
+        paymentYway: Number(payYway) || 0,
+        paymentGram: Number(payGram) || 0,
+        // paymentCatId : selectedPayment?.category_name || 0,
+        // paymentAmount: Number(cash) || 0,
       })
     );
     // Reset payment fields
     dispatch(resetpayment());
   };
 
-   const handleConvert24 = () => {
+  const handleCashBank = () => {
+    const selectedPayment = GetPayments?.data?.find(
+      (q) => q.id.toString() === selectedPaymentId
+    );
+
+    dispatch(
+      addCashies({
+        // cash,
+        paymentCatId: selectedPaymentId || "",
+        cash,
+      })
+    );
+    // Reset payment fields
+    // dispatch(resetpayment());
+  };
+
+  const handleConvert24 = () => {
     dispatch(
       add24KConvert({
         kyat: convert24Kyat,
@@ -452,7 +514,12 @@ const gramToKyatPaeYway = (gram) => {
         pae: discountPae,
         yway: discountYway,
         gram: discountGram,
-        discountCash: discountcash, // Fixed field name
+        // discountCash: discountcash, // Fixed field name
+        discountKyat: Number(discountKyat) || 0,
+        discountPae: Number(discountPae) || 0,
+        discountYway: Number(discountYway) || 0,
+        discountGram: Number(discountGram) || 0,
+        discountCash: Number(discountcash) || 0,
       })
     );
     // Reset discount fields
@@ -536,28 +603,76 @@ const gramToKyatPaeYway = (gram) => {
             )}
           />
         </div>
+        <div>
+          <label className="block mb-1 font-medium">Cashier Name</label>
+          <Controller
+            name="cashierId"
+            control={control}
+            render={({ field }) => (
+              <Popover open={openCashier} onOpenChange={setOpenCashier}>
+                <PopoverTrigger asChild>
+                  <div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      role="combobox"
+                      className="w-full justify-between"
+                    >
+                      {selectedCashierName || "Select Cashier"}
+                    </Button>
+                  </div>
+                </PopoverTrigger>
+                <PopoverContent className="w-32 p-0" align="start">
+                  <Command>
+                    <CommandInput
+                      placeholder="Search customer..."
+                      value={searchCashierName}
+                      onValueChange={setSearchCashierName}
+                    />
+                    <CommandList className="max-h-40 overflow-y-auto">
+                      <CommandEmpty>No results found.</CommandEmpty>
+                      <CommandGroup>
+                        {filteredCashiers?.map((item) => (
+                          <CommandItem
+                            key={item.id}
+                            onSelect={() => {
+                              field.onChange(item.id.toString());
+                              setOpenCashier(false);
+                            }}
+                          >
+                            {item.cashier_name}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            )}
+          />
+        </div>
       </div>
 
       <div className="flex items-center gap-5 mt-5 w-full">
-          <div className="">
-            <label className="block mb-1 font-medium">Voucher Code</label>
+        <div className="">
+          <label className="block mb-1 font-medium">Voucher Code</label>
           <Input
             value={voucherCode}
             onChange={(e) => setVoucherCode(e.target.value)}
             placeholder="Voucher Code"
             className="w-32 bg-gray-200"
           />
-          </div>
+        </div>
 
-         <div className="">
-           <label className="block mb-1 font-medium">Today Gold Rate</label>
+        <div className="">
+          <label className="block mb-1 font-medium">Today Gold Rate</label>
           <Input
             value={todayRate}
             onChange={(e) => setTodayRate(e.target.value)}
             placeholder="Today Gold Rate"
             className="w-32 bg-gray-200"
           />
-         </div>
+        </div>
       </div>
 
       {/* Product Info */}
@@ -636,7 +751,6 @@ const gramToKyatPaeYway = (gram) => {
                       placeholder="Search type..."
                       value={searchTypeName}
                       onValueChange={setSearchTypeName}
-                      
                     />
                     <CommandList className="max-h-40 overflow-y-auto">
                       <CommandEmpty>No results found.</CommandEmpty>
@@ -660,8 +774,6 @@ const gramToKyatPaeYway = (gram) => {
             )}
           />
         </div>
-
-       
 
         <div className="w-full">
           <label className="block mb-1 font-medium">Category</label>
@@ -714,7 +826,7 @@ const gramToKyatPaeYway = (gram) => {
       </div>
 
       <div className="flex items-center gap-5">
-         <div>
+        <div>
           <label className="block mb-1 font-medium">Gold Quality</label>
           <Controller
             name="qualityId"
@@ -772,6 +884,34 @@ const gramToKyatPaeYway = (gram) => {
             className="w-32 bg-gray-200 cursor-not-allowed"
           />
         </div>
+      </div>
+      <div className="flex flex-col gap-3">
+        <Label htmlFor="date" className="px-1">
+          Sale Date
+        </Label>
+        <Popover open={openDate} onOpenChange={setOpenDate}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              id="date"
+              className="w-1/2 justify-between font-normal"
+            >
+              {date ? date.toLocaleDateString() : "Select date"}
+              <ChevronDownIcon />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto overflow-hidden p-0">
+            <Calendar
+              mode="single"
+              selected={date}
+              captionLayout="dropdown"
+              onSelect={(date) => {
+                setDate(date);
+                setOpenDate(false);
+              }}
+            />
+          </PopoverContent>
+        </Popover>
       </div>
 
       {/* Weight */}
@@ -846,8 +986,6 @@ const gramToKyatPaeYway = (gram) => {
         </div>
       </div>
 
-      
-
       {/* လက်ခ */}
       <div className="w-1/2">
         <label className="block mb-1 font-medium">လက်ခ</label>
@@ -885,6 +1023,49 @@ const gramToKyatPaeYway = (gram) => {
         <div className="flex justify-between items-center">
           <h3 className="font-bold text-sm w-96">Payment</h3>
         </div>
+
+        <div className="my-3">
+          <Controller
+            name="qualityId"
+            control={control}
+            render={({ field }) => (
+              <Popover open={openQualityTwo} onOpenChange={setOpenQualityTwo}>
+                <PopoverTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-32 justify-between"
+                  >
+                    {selectedQualityNameTwo || "Select Quality"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-32 p-0" align="start">
+                  <Command>
+                    <CommandInput
+                      placeholder="Search quality..."
+                      value={searchQualityTwo}
+                      onValueChange={setSearchQualityTwo}
+                    />
+                    <CommandList className="max-h-40 overflow-y-auto">
+                      {filteredQualityTwo?.map((item) => (
+                        <CommandItem
+                          key={item.id}
+                          onSelect={() => {
+                            field.onChange(item.id.toString());
+                            setOpenQualityTwo(false);
+                          }}
+                        >
+                          {item.name}
+                        </CommandItem>
+                      ))}
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            )}
+          />
+        </div>
+
         <div className="grid grid-cols-2 gap-4 mt-2">
           <div>
             <p className="text-sm mb-1">ရွှေချိန်</p>
@@ -914,13 +1095,6 @@ const gramToKyatPaeYway = (gram) => {
                 className="w-16 bg-gray-100"
               />
             </div>
-            <p className="text-sm mb-1">Cash</p>
-            <Input
-              placeholder="ငွေပမာဏ"
-              value={cash}
-              onChange={(e) => handleCashChange(e.target.value)}
-              className="w-full bg-gray-100"
-            />
             <div className="flex gap-2 mt-2">
               <Button
                 variant="outline"
@@ -936,64 +1110,132 @@ const gramToKyatPaeYway = (gram) => {
                 Add Payment
               </Button>
             </div>
-          </div>
-
-           
-        </div>
-
-         <div className="my-10">
-            <p className="text-sm mb-1">Converto 24K</p>
-            <div className="flex gap-2 mb-2">
-              <Input
-                placeholder="K"
-                value={convert24Kyat}
-                onChange={(e) => handleConvert24Change("kyat", e.target.value)}
-                className="w-16 bg-gray-100"
-              />
-              <Input
-                placeholder="P"
-                value={convert24Pae}
-                onChange={(e) => handleConvert24Change("pae", e.target.value)}
-                className="w-16 bg-gray-100"
-              />
-              <Input
-                placeholder="Y"
-                value={convert24Yway}
-                onChange={(e) => handleConvert24Change("yway", e.target.value)}
-                className="w-16 bg-gray-100"
-              />
-              <Input
-                placeholder="G"
-                value={convert24Gram}
-                onChange={(e) => handleConvert24Change("gram", e.target.value)}
-                className="w-16 bg-gray-100"
+            <p className="font-bold text-sm w-96 my-3">Cash/Bank</p>
+            <div className="my-3">
+              <Controller
+                name="paymentCatId"
+                control={control}
+                render={({ field }) => (
+                  <Popover open={open} onOpenChange={setOpen}>
+                    <PopoverTrigger asChild>
+                      <div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          role="combobox"
+                          className="w-48 justify-between"
+                        >
+                          {selectedPaymentName || "Select Payment Category"}
+                        </Button>
+                      </div>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-80 p-0">
+                      <Command>
+                        {/* Search Box */}
+                        <CommandInput
+                          placeholder="Search type..."
+                          value={searchTerm}
+                          onValueChange={setSearchTerm}
+                        />
+                        <CommandList className="max-h-40 overflow-y-auto">
+                          <CommandEmpty>No results found.</CommandEmpty>
+                          <CommandGroup>
+                            {filteredPayments?.map((item) => (
+                              <CommandItem
+                                key={item.id}
+                                onSelect={() => {
+                                  field.onChange(item.id.toString());
+                                  setOpen(false);
+                                }}
+                              >
+                                {item.category_name}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                )}
               />
             </div>
-            {/* <p className="text-sm mb-1">Cash</p>
+
+            <Input
+              placeholder="ငွေပမာဏ"
+              value={cash}
+              onChange={(e) => handleCashChange(e.target.value)}
+              className="w-full bg-gray-100"
+            />
+          </div>
+        </div>
+        <div className="flex gap-2 mt-2">
+          <Button
+            variant="outline"
+            className="bg-gray-100 text-gray-700"
+            onClick={resetPaymentFields}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleCashBank}
+            className="bg-yellow-600 hover:bg-yellow-700 text-white"
+          >
+            Add Cash/Bank Payment
+          </Button>
+        </div>
+
+        <div className="my-10">
+          <p className="text-sm mb-1">Converto 24K</p>
+          <div className="flex gap-2 mb-2">
+            <Input
+              placeholder="K"
+              value={convert24Kyat}
+              onChange={(e) => handleConvert24Change("kyat", e.target.value)}
+              className="w-16 bg-gray-100"
+            />
+            <Input
+              placeholder="P"
+              value={convert24Pae}
+              onChange={(e) => handleConvert24Change("pae", e.target.value)}
+              className="w-16 bg-gray-100"
+            />
+            <Input
+              placeholder="Y"
+              value={convert24Yway}
+              onChange={(e) => handleConvert24Change("yway", e.target.value)}
+              className="w-16 bg-gray-100"
+            />
+            <Input
+              placeholder="G"
+              value={convert24Gram}
+              onChange={(e) => handleConvert24Change("gram", e.target.value)}
+              className="w-16 bg-gray-100"
+            />
+          </div>
+          {/* <p className="text-sm mb-1">Cash</p>
             <Input
               placeholder="ငွေပမာဏ"
               value={cash}
               onChange={(e) => handleCashChange(e.target.value)}
               className="w-full bg-gray-100"
             /> */}
-            <div className="flex gap-2 mt-2">
-              <Button
-                variant="outline"
-                className="bg-gray-100 text-gray-700"
-                onClick={resetconvert}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleConvert24}
-                className="bg-yellow-600 hover:bg-yellow-700 text-white"
-              >
-                Add Payment
-              </Button>
-            </div>
+          <div className="flex gap-2 mt-2">
+            <Button
+              variant="outline"
+              className="bg-gray-100 text-gray-700"
+              onClick={resetconvert}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleConvert24}
+              className="bg-yellow-600 hover:bg-yellow-700 text-white"
+            >
+              Add Payment
+            </Button>
           </div>
+        </div>
 
-    
         {/* Discount Section */}
         <div className="grid grid-cols-2 gap-4 mt-6">
           <div className="mt-6">

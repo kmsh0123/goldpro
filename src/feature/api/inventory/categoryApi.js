@@ -1,10 +1,19 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import Cookies from "js-cookie";
 
 export const categoryApi = createApi({
   reducerPath: "categoryApi",
   baseQuery: fetchBaseQuery({
     baseUrl: import.meta.env.VITE_API_ENDPOINT,
-
+    prepareHeaders: (headers) => {
+      const token = Cookies.get("token");
+      if (token) {
+        headers.set("Authorization", `Bearer ${token}`);
+      }
+      headers.set("Accept", "application/json");
+      headers.set("Content-Type", "application/json"); // ✅ json only
+      return headers;
+    },
   }),
   tagTypes: ["categoryApi"],
   endpoints: (builder) => ({
@@ -31,7 +40,7 @@ export const categoryApi = createApi({
       invalidatesTags: ["categoryApi"],
     }),
     UpdateCategory: builder.mutation({
-      query: ({id,formData}) => ({
+      query: ({ id, formData }) => ({
         url: `category/update/${id}`,
         method: "PUT",
         body: formData,
@@ -57,4 +66,10 @@ export const categoryApi = createApi({
   }),
 });
 
-export const {useGetCategoryQuery,useCreateCategoryMutation,useUpdateCategoryMutation,useDeleteCategoryMutation,useGetDetailCategoryQuery} = categoryApi;
+export const {
+  useGetCategoryQuery,
+  useCreateCategoryMutation,
+  useUpdateCategoryMutation,
+  useDeleteCategoryMutation,
+  useGetDetailCategoryQuery,
+} = categoryApi;

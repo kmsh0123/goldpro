@@ -1,10 +1,19 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import Cookies from "js-cookie";
 
 export const productApi = createApi({
   reducerPath: "productApi",
   baseQuery: fetchBaseQuery({
     baseUrl: import.meta.env.VITE_API_ENDPOINT,
-
+    prepareHeaders: (headers) => {
+      const token = Cookies.get("token");
+      if (token) {
+        headers.set("Authorization", `Bearer ${token}`);
+      }
+      headers.set("Accept", "application/json");
+      // headers.set("Content-Type", "application/json"); // ✅ json only
+      return headers;
+    },
   }),
   tagTypes: ["productApi"],
   endpoints: (builder) => ({
@@ -16,15 +25,15 @@ export const productApi = createApi({
       providesTags: ["productApi"],
     }),
     createProduct: builder.mutation({
-      query: (formData) => ({
+      query: (fd) => ({
         url: "product/create",
         method: "POST",
-        body: formData,
+        body: fd,
       }),
       invalidatesTags: ["productApi"],
     }),
     updateProduct: builder.mutation({
-      query: ({id,fd}) => ({
+      query: ({ id, fd }) => ({
         url: `product/update/${id}`,
         method: "POST",
         body: fd,
@@ -36,19 +45,23 @@ export const productApi = createApi({
       query: (id) => ({
         url: `product/delete/${id}`,
         method: "DELETE",
-        // headers: {productApiorization : `Bearer ${token}`}
       }),
       invalidatesTags: ["productApi"],
     }),
-     ProductDetail: builder.query({
+    ProductDetail: builder.query({
       query: (id) => ({
         url: `product/details/${id}`,
         method: "GET",
-        // headers: {productApiorization : `Bearer ${token}`}
       }),
       providesTags: ["productApi"],
     }),
   }),
 });
 
-export const {useGetProductQuery,useCreateProductMutation,useDeleteProductMutation,useProductDetailQuery,useUpdateProductMutation} = productApi;
+export const {
+  useGetProductQuery,
+  useCreateProductMutation,
+  useDeleteProductMutation,
+  useProductDetailQuery,
+  useUpdateProductMutation,
+} = productApi;

@@ -27,6 +27,8 @@ const AppSidebarAccordion = () => {
   );
   const saleItem = SidebarConfig.find((item) => item.title === "Sale");
   const purchaseItem = SidebarConfig.find((item) => item.title === "Purchase");
+  const DamageItem = SidebarConfig.find((item) => item.title === "Damage");
+  const ProductReturnItem = SidebarConfig.find((item) => item.title === "Product Return");
   const stockItem = SidebarConfig.find((item) => item.title === "Stocks");
   const reportItem = SidebarConfig.find((item) => item.title === "Reports");
   const paymentItem = SidebarConfig.find(
@@ -263,6 +265,78 @@ const AppSidebarAccordion = () => {
             </AccordionTrigger>
             <AccordionContent>
               {purchaseItem.items?.map((subItem) => (
+                <NavLink
+                  to={subItem.url}
+                  key={subItem.title}
+                  className={`block py-2 px-12 mt-2 p-3 rounded hover:bg-gray-100 ${
+                    location.pathname.startsWith(subItem.url)
+                      ? "bg-gray-200 text-[#dea519]"
+                      : "text-[#939393]"
+                  }`}
+                >
+                  {subItem.title}
+                </NavLink>
+              ))}
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      )}
+
+      {DamageItem && (
+        <Accordion type="single" collapsible className="w-full">
+          <AccordionItem className="border-none" value="damage">
+            <AccordionTrigger
+              className={`hover:no-underline w-full px-[15px] ${
+                location.pathname.includes("/damage")
+                  ? "text-[#dea519] font-extrabold"
+                  : "text-[#939393]"
+              }`}
+            >
+              <div className="flex items-center gap-[10px]">
+                <DamageItem.icon className="w-5 h-5" />
+                <span className="text-[16px] font-[600] leading-[20px]">
+                  {DamageItem.title}
+                </span>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              {DamageItem.items?.map((subItem) => (
+                <NavLink
+                  to={subItem.url}
+                  key={subItem.title}
+                  className={`block py-2 px-12 mt-2 p-3 rounded hover:bg-gray-100 ${
+                    location.pathname.startsWith(subItem.url)
+                      ? "bg-gray-200 text-[#dea519]"
+                      : "text-[#939393]"
+                  }`}
+                >
+                  {subItem.title}
+                </NavLink>
+              ))}
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      )}
+
+      {ProductReturnItem && (
+        <Accordion type="single" collapsible className="w-full">
+          <AccordionItem className="border-none" value="return">
+            <AccordionTrigger
+              className={`hover:no-underline w-full px-[15px] ${
+                location.pathname.includes("/return")
+                  ? "text-[#dea519] font-extrabold"
+                  : "text-[#939393]"
+              }`}
+            >
+              <div className="flex items-center gap-[10px]">
+                <ProductReturnItem.icon className="w-5 h-5" />
+                <span className="text-[16px] font-[600] leading-[20px]">
+                  {ProductReturnItem.title}
+                </span>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              {ProductReturnItem.items?.map((subItem) => (
                 <NavLink
                   to={subItem.url}
                   key={subItem.title}

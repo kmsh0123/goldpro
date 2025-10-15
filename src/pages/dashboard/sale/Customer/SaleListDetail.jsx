@@ -3,78 +3,103 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ChevronLeftIcon } from "lucide-react";
+import { useParams } from "react-router-dom";
+import { useGetOrderListDetailQuery } from "@/feature/api/posApi/posApi";
 
 const SaleListDetail = () => {
-  return (
-    <div className="">
+  const {id} = useParams();
+  const {data : GetOrderListDetail} = useGetOrderListDetailQuery(id);
+  const orderList = GetOrderListDetail?.data || [];
+  console.log("orderList:", orderList);
+ return (
+    <div>
       {/* Header */}
       <h1 className="flex items-center gap-2 text-xl font-semibold text-yellow-600 mt-5 mb-5">
-          <span onClick={() => window.history.back()} className="cursor-pointer">
-          <ChevronLeftIcon/>
-         </span>
-         Sale Invoice
-         </h1>
+        <span onClick={() => window.history.back()} className="cursor-pointer">
+          <ChevronLeftIcon />
+        </span>
+        Sale Invoice
+      </h1>
 
-         {/* <div className="border-b-2"></div> */}
-
-      <Card className="shadow-lg">
-        <CardContent className="p-6">
-          {/* Company Info */}
-          <div className="flex justify-between">
-            <div className="text-sm space-y-1">
-              <p className="font-semibold">From</p>
-              <p>လက်မူစိမ်းမောင်</p>
-              <p>အမှတ်(၃၄)၊ ဗဟိုလမ်းမကြီး၊ ပင်လုံစျေးအနီး၊ City: ကမ္ဘာဦးမြို့နယ်</p>
-              <p>Phone: 09799405010</p>
-              <p>Email: khine25@gmail.com</p>
+      {orderList.length > 0 && (
+        <Card className="shadow-lg">
+          <CardContent className="p-6">
+            {/* Header Info */}
+            <div className="flex justify-between">
+              <div></div>
+              <div className="text-sm space-y-1 text-right">
+                <p>
+                  <span className="font-semibold">Customer Name:</span>{" "}
+                  {orderList[0].customer_name}
+                </p>
+                <p>
+                  <span className="font-semibold">Invoice:</span> #{orderList[0].order_code}
+                </p>
+                <p>
+                  <span className="font-semibold">Date:</span> {orderList[0].order_date}
+                </p>
+                <p>
+                  <span className="font-semibold">Sale By:</span> {orderList[0].cashier_name}
+                </p>
+              </div>
             </div>
-            <div className="text-sm space-y-1 text-right">
-              <p><span className="font-semibold">Customer Name:</span> walk-in customer</p>
-              <p><span className="font-semibold">Invoice:</span> #SL0027</p>
-              <p><span className="font-semibold">Date:</span> 2025-04-04 11:36:20 AM</p>
-              <p><span className="font-semibold">Sale By:</span> Cashier3</p>
+
+            {/* Table */}
+            <div className="mt-6">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>No</TableHead>
+                    <TableHead className="w-[30%]">Product Name</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Quality</TableHead>
+                    <TableHead>Qty</TableHead>
+                    <TableHead>Total Kyat</TableHead>
+                    <TableHead>Total Pae</TableHead>
+                    <TableHead>Total Yway</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {orderList.map((item, index) => (
+                    <TableRow key={index}>
+                      <TableCell>{index + 1}</TableCell>
+                      <TableCell>{item.product_name}</TableCell>
+                      <TableCell>{item.type_name}</TableCell>
+                      <TableCell>{item.category_name}</TableCell>
+                      <TableCell>{item.quality_name}</TableCell>
+                      <TableCell>{item.quantity}</TableCell>
+                      <TableCell>{item.total_kyat}</TableCell>
+                      <TableCell>{item.total_pae}</TableCell>
+                      <TableCell>{item.total_yway}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
-          </div>
 
-          {/* Table */}
-          <div className="mt-6">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[50%]">Item Name</TableHead>
-                  <TableHead>Unit Price</TableHead>
-                  <TableHead>Quantity</TableHead>
-                  <TableHead>Total Amount</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                <TableRow>
-                  <TableCell>ကိုကိုလေးမုန့်သွား (300ml)</TableCell>
-                  <TableCell>1,000 Ks</TableCell>
-                  <TableCell>3</TableCell>
-                  <TableCell>3,000 Ks</TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-          </div>
-
-          {/* Totals */}
-          <div className="mt-6 space-y-1 text-right text-sm">
-            <p>Subtotal: <span className="font-bold">3,000 Ks</span></p>
-            <p>Discount: <span className="font-bold">0 Ks</span></p>
-            <p>Service Charges: <span className="font-bold">0 Ks</span></p>
-            <p>Tax 10%: <span className="font-bold">300 Ks</span></p>
-            <p className="text-lg">Grand Total: <span className="font-bold">3,300 Ks</span></p>
-            <p className="text-lg">Pay Amount: <span className="font-bold">3,300 Ks</span></p>
-            <p>Change Return: <span className="font-bold">0 Ks</span></p>
-          </div>
-
-          {/* Print Button */}
-          <div className="mt-6">
-            <Button>Print</Button>
-          </div>
-        </CardContent>
-      </Card>
+            {/* Total Info */}
+            <div className="mt-6 space-y-1 text-right text-sm">
+              <p>
+                <span className="font-semibold">Total Quantity:</span>{" "}
+                {orderList.reduce((acc, cur) => acc + (cur.quantity || 0), 0)}
+              </p>
+              <p>
+                <span className="font-semibold">Total Kyat:</span>{" "}
+                {orderList.reduce((acc, cur) => acc + Number(cur.total_kyat || 0), 0)}
+              </p>
+              <p>
+                <span className="font-semibold">Total Pae:</span>{" "}
+                {orderList.reduce((acc, cur) => acc + Number(cur.total_pae || 0), 0)}
+              </p>
+              <p>
+                <span className="font-semibold">Total Yway:</span>{" "}
+                {orderList.reduce((acc, cur) => acc + Number(cur.total_yway || 0), 0)}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };

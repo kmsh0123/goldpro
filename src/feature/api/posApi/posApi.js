@@ -1,10 +1,19 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import Cookies from "js-cookie";
 
 export const posApi = createApi({
   reducerPath: "posApi",
   baseQuery: fetchBaseQuery({
     baseUrl: import.meta.env.VITE_API_ENDPOINT,
-
+    prepareHeaders: (headers) => {
+      const token = Cookies.get("token");
+      if (token) {
+        headers.set("Authorization", `Bearer ${token}`);
+      }
+      headers.set("Accept", "application/json");
+      headers.set("Content-Type", "application/json"); // ✅ json only
+      return headers;
+    },
   }),
   tagTypes: ["posApi"],
   endpoints: (builder) => ({
@@ -15,7 +24,7 @@ export const posApi = createApi({
       }),
       providesTags: ["posApi"],
     }),
-     getOrderListDetail: builder.query({
+    getOrderListDetail: builder.query({
       query: (id) => ({
         url: `/order/orderItemList/${id}`,
         method: "GET",
@@ -41,4 +50,8 @@ export const posApi = createApi({
   }),
 });
 
-export const {useCreateOrderMutation,useGetOrderQuery,useGetOrderListDetailQuery} = posApi;
+export const {
+  useCreateOrderMutation,
+  useGetOrderQuery,
+  useGetOrderListDetailQuery,
+} = posApi;

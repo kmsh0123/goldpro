@@ -15,7 +15,7 @@ const Layout = () => {
         <AppSidebar/>
       </SidebarProvider>
       {/* Main Content */}
-      <main className="flex-1 p-6">
+      <main className="flex-1">
         {/* <Header /> */}
         {/* Your dashboard content goes here */}
         <Outlet />

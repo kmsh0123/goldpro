@@ -29,8 +29,10 @@ import {
 import { useCreatePaymentMutation, useEditPaymentMutation, useGetDetailPaymentQuery } from "@/feature/api/paymentApi/paymentApi";
 import { useGetPaymentCategoryQuery } from "@/feature/api/paymentCategory/paymentCategory";
 import { use } from "react";
+import Cookies from "js-cookie";
 
 const UpdatePayment = () => {
+  const token = Cookies.get("token");
   const nav = useNavigate();
   const {id} = useParams();
   const [paymentUpdate] = useEditPaymentMutation();
@@ -51,10 +53,10 @@ const UpdatePayment = () => {
     },
   });
 
-  const {data} = useGetDetailPaymentQuery(id);
+  const {data} = useGetDetailPaymentQuery({id,token});
 
 
-  const { data: GetPayments } = useGetPaymentCategoryQuery();  
+  const { data: GetPayments } = useGetPaymentCategoryQuery(token);  
 
   const selectedPaymentId = watch("paymentCatId");
 
@@ -78,7 +80,7 @@ const UpdatePayment = () => {
 
   const handleUpdatePayment = async (formData) => {
     try {
-      const { data } = await paymentUpdate({formData,id});
+      const { data } = await paymentUpdate({formData,id,token});
       console.log("Payment created successfully:", data);
       toast.success("Payment created successfully!");
       reset();

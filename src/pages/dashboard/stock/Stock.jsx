@@ -29,6 +29,10 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { useGetStockQuery } from "@/feature/api/stockApi/stockApi";
 import PaginatedTable from "@/components/dashboard/ResuableComponents/PaginatedTable";
+import { exportToPDF } from "@/lib/exportToPDF";
+import { getCSVExportConfig } from "@/lib/exportToCSV";
+import ExportButtons from "@/components/dashboard/ResuableComponents/ExportButtons";
+import usePaginatedList from "@/hooks/usePaginatedList";
 
 // const data = [
 //   {
@@ -66,40 +70,118 @@ import PaginatedTable from "@/components/dashboard/ResuableComponents/PaginatedT
 // ];
 
 const Stock = () => {
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const {
+    page,
+    limit,
+    totalPages,
+    totalItems,
+    isLoading,
+    isError,
+    error,
+    currentPageData,
+    handlePageChange,
+  } = usePaginatedList({ queryHook: useGetStockQuery, limit: 10 });
 
-  // Current page from URL
-  const page = parseInt(searchParams.get("page")) || 1;
-  const limit = 10;
-  const skip = (page - 1) * limit;
+    // Calculate totals using reduce
+  const totalSale = currentPageData?.reduce((sum, item) => sum + (Number(item.out) || 0), 0) || 0;
+  const totalPurchase = currentPageData?.reduce((sum, item) => sum + (Number(item.in) || 0), 0) || 0;
+  const totalRemaining = currentPageData?.reduce(
+    (sum, item) => sum + (Number(item.remaining) || 0),0) || 0;
 
-  // Fetch products
-  const { data: GetStock } = useGetStockQuery();
-  console.log(GetStock);
 
-  // Total pages
-  const totalItems = GetStock?.data?.total || 0;
-  const totalPages = Math.ceil(totalItems / limit);
-
-  // Change page
-  const handlePageChange = (newPage) => {
-    if (newPage >= 1 && newPage <= totalPages) {
-      navigate(`?page=${newPage}`);
-    }
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleDateString();
   };
 
-  return (
-    <div className="space-y-4">
-      {/* Top Bar */}
-      <h1 className="flex items-center gap-2 text-xl font-semibold text-yellow-600 mt-5 mb-5">
-        <span onClick={() => window.history.back()} className="cursor-pointer">
-          <ChevronLeftIcon />
-        </span>
-        Stock List
-      </h1>
+  const csvHeaders = [
+    { label: "No.", key: "no" },
+    { label: "Code", key: "code" },
+    { label: "Product Name", key: "product_name" },
+    { label: "Gold Weight", key: "gram" },
+    { label: "In Stock", key: "in" },
+    { label: "Out Stock", key: "out" },
+    { label: "Sale Date", key: "created_at" },
+  ];
 
-      <div className="border-b-2"></div>
+  // Prepare CSV data
+  const csvData =
+    currentPageData?.map((item, index) => ({
+      no: (page - 1) * limit + index + 1,
+      code: item.code || "-",
+      product_name: item.product_name || "-",
+      gram: item.gram || "-",
+      in: item.in || "-",
+      out: item.out || "-",
+      created_at: new Date(item.created_at)?.toLocaleString("en-MM"),
+
+    })) || [];
+
+  // Build CSV Config (Reusable Utility)
+  const csvConfig = getCSVExportConfig(csvData, csvHeaders, "quality.csv");
+
+  const handleExportPDF = () => {
+    const columns = [
+      "No.",
+      "Code",
+      "Product Name",
+      "Gold Weight",
+      "In Stock",
+      "Out Stock",
+      "Sale Date",
+    ];
+    const rows = csvData.map((d) => [
+      d.no,
+      d.code,
+      d.product_name,
+      d.gram,
+      d.in,
+      d.out,
+      d.created_at,
+
+      // d.expense_amount,
+      // d.expense_note,
+    ]);
+
+    exportToPDF({
+      title: "Stock List",
+      columns,
+      rows,
+      fileName: "Stock.pdf",
+    });
+  };
+
+  if (isLoading)
+    return (
+      <div className="flex justify-center h-64 items-center">Loading…</div>
+    );
+  if (isError)
+    return (
+      <div className="flex justify-center h-64 items-center text-red-600">
+        {error?.data?.message || "Error loading types"}
+      </div>
+    );
+
+  return (
+    <div className="space-y-4 p-6">
+      {/* Top Bar */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate(-1)}
+            className="h-8 w-8"
+          >
+            <ChevronLeftIcon className="h-5 w-5" />
+          </Button>
+          <h1 className="text-2xl font-bold text-gray-900">Stock Management</h1>
+          <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-sm">
+            {totalItems} stocks
+          </span>
+        </div>
+      </div>
 
       <div className="flex justify-between items-center mt-5">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -149,13 +231,16 @@ const Stock = () => {
             </Select>
           </div>
         </div>
-        <Button className="bg-yellow-600 hover:bg-yellow-700 text-white rounded-md">
-          {/* <Link to="/inventory/product/create" className="flex items-center gap-2">
+        {/* <Button className="bg-yellow-600 hover:bg-yellow-700 text-white rounded-md">
+          <Link to="/inventory/product/create" className="flex items-center gap-2">
             + Create
-          </Link> */}
+          </Link>
           <ArrowUpFromLineIcon />
           Export
-        </Button>
+        </Button> */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 cursor-pointer">
+          <ExportButtons csvConfig={csvConfig} onPdfExport={handleExportPDF} />
+        </div>
       </div>
 
       <div className="border-b-2"></div>
@@ -164,9 +249,9 @@ const Stock = () => {
         <Card>
           <CardContent className="p-6 text-center">
             <h2 className="text-lg font-semibold mb-2">Total Sale</h2>
-            <p className="text-3xl font-bold text-orange-500">123</p>
+            <p className="text-3xl font-bold text-orange-500">{totalSale}</p>
             <p className="mt-2 text-sm">
-              <span className="font-semibold">123 G</span> For this month
+              <span className="font-semibold">{totalSale}</span> Sold in total
             </p>
           </CardContent>
         </Card>
@@ -174,9 +259,9 @@ const Stock = () => {
         <Card>
           <CardContent className="p-6 text-center">
             <h2 className="text-lg font-semibold mb-2">Total Purchase</h2>
-            <p className="text-3xl font-bold text-green-600">123</p>
+            <p className="text-3xl font-bold text-green-600">{totalPurchase}</p>
             <p className="mt-2 text-sm">
-              <span className="font-semibold">123 G</span> For this month
+              <span className="font-semibold">{totalPurchase}</span> Purchased in total
             </p>
           </CardContent>
         </Card>
@@ -184,9 +269,9 @@ const Stock = () => {
         <Card>
           <CardContent className="p-6 text-center">
             <h2 className="text-lg font-semibold mb-2">Total Remaining</h2>
-            <p className="text-3xl font-bold text-blue-600">123</p>
+            <p className="text-3xl font-bold text-blue-600">{totalRemaining}</p>
             <p className="mt-2 text-sm">
-              <span className="font-semibold">123 G</span> For this month
+              <span className="font-semibold">{totalRemaining} G</span> Remaining stock
             </p>
           </CardContent>
         </Card>
@@ -196,35 +281,47 @@ const Stock = () => {
 
       {/* Table */}
       {/* <Card className="overflow-hidden p-5"> */}
-      <PaginatedTable
-        // columns={["No.", "Voucher Code", "Name", "Quantity","Type", "Quality", "Categories", "Weight","Sale Date", "Actions"]}
-        columns={[
-          "No.",
-          "Code",
-          "Product Name",
-          "Gold Weight",
-          "In Stock",
-          "Out Stock",
-          "Sale Date",
-        ]}
-        data={GetStock?.data || []}
-        page={page}
-        totalPages={totalPages}
-        onPageChange={handlePageChange}
-        renderRow={(item, index) => (
-          <tr key={item.id}>
-            <td className="px-4 py-2">{skip + index + 1}.</td>
-            <td className="px-4 py-2">{item.code}</td>
-            <td className="px-4 py-2">{item.product_name}</td>
-            <td className="px-4 py-2">{item.gram || 0} g</td>
-            <td className="px-4 py-2">{item.in || 0}</td>
-            <td className="px-4 py-2">{item.out || 0}</td>
-            <td className="px-4 py-2">
-              {new Date(item.created_at).toLocaleString()}
-            </td>
-          </tr>
-        )}
-      />
+      <div className="bg-white rounded-lg border shadow-sm">
+        <PaginatedTable
+          // columns={["No.", "Voucher Code", "Name", "Quantity","Type", "Quality", "Categories", "Weight","Sale Date", "Actions"]}
+          columns={[
+            "No.",
+            "Code",
+            "Product Name",
+            "Gold Weight",
+            "In Stock",
+            "Out Stock",
+            "Sale Date",
+          ]}
+          data={currentPageData || []}
+          page={page}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+          renderRow={(item, index) => (
+            <tr key={item.id}>
+              <td className="px-4 py-2 text-center">
+                {(page - 1) * limit + index + 1}
+              </td>
+              <td className="px-4 py-2 text-center font-medium">{item.code}</td>
+              <td className="px-4 py-2 text-center font-medium">
+                {item.product_name}
+              </td>
+              <td className="px-4 py-2 text-center font-medium">
+                {item.gram || 0} g
+              </td>
+              <td className="px-4 py-2 text-center font-medium">
+                {item.in || 0}
+              </td>
+              <td className="px-4 py-2 text-center font-medium">
+                {item.out || 0}
+              </td>
+              <td className="px-4 py-2 text-center">
+                {formatDate(item.created_at)}
+              </td>
+            </tr>
+          )}
+        />
+      </div>
       {/* </Card> */}
     </div>
   );

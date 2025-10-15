@@ -1,9 +1,18 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import Cookies from "js-cookie";
 
 export const expenseApi = createApi({
   reducerPath: "expenseApi",
   baseQuery: fetchBaseQuery({
     baseUrl: import.meta.env.VITE_API_ENDPOINT,
+    prepareHeaders: (headers) => {
+      const token = Cookies.get("token");
+      if (token) {
+        headers.set("Authorization", `Bearer ${token}`);
+      }
+      headers.set("Accept", "application/json");
+      return headers;
+    },
   }),
   tagTypes: ["expenseApi"],
 
@@ -35,9 +44,6 @@ export const expenseApi = createApi({
         url: `expense/update/${payload?.id}`,
         method: "PUT",
         body: payload,
-        headers: {
-          Accept: "application/json",
-        },
       }),
       invalidatesTags: ["expenseApi"],
     }),
@@ -45,10 +51,6 @@ export const expenseApi = createApi({
       query: (id) => ({
         url: `expense/delete/${id}`,
         method: "DELETE",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
       }),
       invalidatesTags: ["expenseApi"],
     }),

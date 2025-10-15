@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   ChevronLeftIcon,
   EyeIcon,
@@ -17,9 +17,17 @@ import { useGetTypeQuery } from "@/feature/api/inventory/typeApi";
 import Swal from "sweetalert2";
 import { confirmDelete } from "@/lib/confirmDelete";
 import usePaginatedList from "@/hooks/usePaginatedList";
+import { getCSVExportConfig } from "@/lib/exportToCSV";
+import { exportToPDF } from "@/lib/exportToPDF";
+import ExportButtons from "@/components/dashboard/ResuableComponents/ExportButtons";
+import DateRangePicker from "@/components/dashboard/ResuableComponents/DateRangePicker";
 
 export default function Quality() {
   const navigate = useNavigate();
+  const [filteredData, setFilteredData] = useState([]);
+  const [isFiltered, setIsFiltered] = useState(false);
+  const [searchText, setSearchText] = useState("");
+
   const {
     page,
     limit,
@@ -36,6 +44,8 @@ export default function Quality() {
 
   // Delete mutation
   const [deleteQuality, { isLoading: isDeleting }] = useDeleteQualityMutation();
+
+  const displayData = isFiltered ? filteredData : currentPageData;
 
   const handleDelete = async (id, name) => {
     const result = await confirmDelete(name);
@@ -56,6 +66,86 @@ export default function Quality() {
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
     return new Date(dateString).toLocaleDateString();
+  };
+
+  const csvHeaders = [
+    { label: "No.", key: "no" },
+    { label: "Created Date", key: "created_at" },
+    { label: "Type Name", key: "type_id" },
+    { label: "Quality Name", key: "name" },
+  ];
+
+  // Prepare CSV data
+  const csvData =
+    displayData?.map((item, index) => ({
+      no: (page - 1) * limit + index + 1,
+      created_at: new Date(item.created_at)?.toLocaleString("en-MM"),
+      type_id: typeMap[item.type_id] || "N/A",
+      name: item.name || "-",
+      // payment_cat_id: item.payment_cat_id || "-",
+      // expense_amount: item.expense_amount || "-",
+      // expense_note: item.expense_note || "-",
+      // expense_for: item.expense_for || "-",
+    })) || [];
+
+  // Build CSV Config (Reusable Utility)
+  const csvConfig = getCSVExportConfig(csvData, csvHeaders, "quality.csv");
+
+  const handleExportPDF = () => {
+    const columns = ["No.", "Created Date", "Type Name", "Quality Name"];
+    const rows = csvData.map((d) => [
+      d.no,
+      d.created_at,
+      d.type_id,
+      d.name,
+      // d.expense_amount,
+      // d.expense_note,
+    ]);
+
+    exportToPDF({
+      title: "Quality List",
+      columns,
+      rows,
+      fileName: "Quality.pdf",
+    });
+  };
+
+  const handleDateChange = (range) => {
+    if (!range) {
+      setFilteredData([]);
+      setIsFiltered(false);
+      return;
+    }
+
+    const from = new Date(range.from);
+    const to = new Date(range.to);
+    to.setHours(23, 59, 59, 999);
+
+    let filtered = displayData?.filter((item) => {
+      const createdAt = new Date(item.created_at);
+      return createdAt >= from && createdAt <= to;
+    });
+
+    if (searchText.trim() !== "") {
+      filtered = filtered.filter((item) =>
+        item.name.toLowerCase().includes(searchText.toLowerCase())
+      );
+    }
+
+    setFilteredData(filtered);
+    setIsFiltered(true);
+  };
+
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setSearchText(value);
+
+    // Apply filtering
+    const filtered = currentPageData.filter((item) =>
+      item.name.toLowerCase().includes(value.toLowerCase())
+    );
+    setFilteredData(filtered);
+    setIsFiltered(value.trim() !== "" || isFiltered); // keep filter active if search or date filter applied
   };
 
   if (isLoading)
@@ -82,7 +172,9 @@ export default function Quality() {
           >
             <ChevronLeftIcon className="h-5 w-5" />
           </Button>
-          <h1 className="text-2xl font-bold text-gray-900">Quality Management</h1>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Quality Management
+          </h1>
           <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-sm">
             {totalItems} types
           </span>
@@ -91,27 +183,46 @@ export default function Quality() {
 
       {/* Search */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-4 bg-white rounded-lg border">
-        <div className="w-full sm:w-auto">
-          <Input
-            placeholder="Search qualities..."
-            className="w-full sm:w-64 rounded-lg border-gray-300"
-          />
+        <div className="flex items-center gap-5">
+          <div className="w-full sm:w-auto">
+            <Input
+              placeholder="Search qualities..."
+              className="w-full sm:w-64 rounded-lg border-gray-300"
+              value={searchText}
+              onChange={handleSearchChange}
+            />
+          </div>
+          <DateRangePicker label="Filter by Date" onChange={handleDateChange} />
         </div>
-        <Button className="bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg">
-          <Link
-            to="/inventory/quality/create"
-            className="flex items-center gap-2"
-          >
-            + Create New Quality
-          </Link>
-        </Button>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <Button className="bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg">
+            <Link
+              to="/inventory/quality/create"
+              className="flex items-center gap-2"
+            >
+              + Create New Quality
+            </Link>
+          </Button>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 cursor-pointer">
+            <ExportButtons
+              csvConfig={csvConfig}
+              onPdfExport={handleExportPDF}
+            />
+          </div>
+        </div>
       </div>
 
       {/* Table */}
       <div className="bg-white rounded-lg border shadow-sm">
         <PaginatedTable
-          columns={["No.", "Created Date", "Type Name", "Name", "Actions"]}
-          data={currentPageData || []}
+          columns={[
+            "No.",
+            "Created Date",
+            "Type Name",
+            "Quality Name",
+            "Actions",
+          ]}
+          data={isFiltered ? filteredData : currentPageData || []}
           page={page}
           totalPages={totalPages}
           onPageChange={handlePageChange}
