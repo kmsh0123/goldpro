@@ -56,7 +56,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { useGetCashierQuery } from "@/feature/api/saleApi/cashierApi";
 import { Textarea } from "@/components/ui/textarea";
 
-const DamageLeft = () => {
+const ProductReturnLeft = () => {
   const [searchProductName, setSearchProductName] = useState("");
   const [searchCustomerName, setSearchCustomerName] = useState("");
   const [searchCashierName, setSearchCashierName] = useState("");
@@ -1327,4 +1327,4 @@ const DamageLeft = () => {
   );
 };
 
-export default DamageLeft;
+export default ProductReturnLeft;

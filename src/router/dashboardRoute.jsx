@@ -59,6 +59,9 @@ import IncomeReport from "@/pages/dashboard/reports/IncomeReport.jsx";
 import Login from "@/pages/dashboard/login/Login.jsx";
 import Damage from "@/pages/dashboard/damage/Damage.jsx";
 import AuthGuard from "@/Guard/AuthGuard.jsx";
+import DamageList from "@/pages/dashboard/damage/DamageList.jsx";
+import ProductReturn from "@/pages/dashboard/product_return/ProductReturn.jsx";
+import ProductReturnList from "@/pages/dashboard/product_return/ProductReturnList.jsx";
 
 const dashboardRoute = [
    {
@@ -313,6 +316,14 @@ const dashboardRoute = [
         path: "/sale/sale-list",
         element: <SaleList />,
       },
+      {
+        path: "/damage/damage-list",
+        element: <DamageList />,
+      },
+      {
+        path: "/return/product-list",
+        element: <ProductReturnList />,
+      },
       // {
       //   path: "/sale/sale-report",
       //   element: <SaleReport />,
@@ -434,6 +445,12 @@ const dashboardRoute = [
         path: "/damage/return",
         element: <Damage />,
   },
+   {
+        path: "/return/create",
+        element: <ProductReturn />,
+  },
+
+  
   //DamageList
 
   //PurchaseList

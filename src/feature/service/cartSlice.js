@@ -183,7 +183,10 @@ export const cartSlice = createSlice({
     
     resetPayments: (state,action) => {
       state.payments?.pop(action.payload, 1);
-      
+    },
+
+    resetCash:(state,action)=>{
+      state.cashies?.pop(action?.payload,1)
     },
     
     setCash: (state, action) => {
@@ -269,6 +272,7 @@ export const {
   clearCart,
   resetGoldWeight,
   resetpayment,
+  resetCash,
   resetconvert24K,
   resetconvert24,
   resetDiscount,

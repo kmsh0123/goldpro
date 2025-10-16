@@ -12,7 +12,7 @@ const SaleListDetail = () => {
   const orderList = GetOrderListDetail?.data || [];
   console.log("orderList:", orderList);
  return (
-    <div>
+    <div className="p-6">
       {/* Header */}
       <h1 className="flex items-center gap-2 text-xl font-semibold text-yellow-600 mt-5 mb-5">
         <span onClick={() => window.history.back()} className="cursor-pointer">
@@ -26,7 +26,6 @@ const SaleListDetail = () => {
           <CardContent className="p-6">
             {/* Header Info */}
             <div className="flex justify-between">
-              <div></div>
               <div className="text-sm space-y-1 text-right">
                 <p>
                   <span className="font-semibold">Customer Name:</span>{" "}
@@ -38,9 +37,9 @@ const SaleListDetail = () => {
                 <p>
                   <span className="font-semibold">Date:</span> {orderList[0].order_date}
                 </p>
-                <p>
+                {/* <p>
                   <span className="font-semibold">Sale By:</span> {orderList[0].cashier_name}
-                </p>
+                </p> */}
               </div>
             </div>
 

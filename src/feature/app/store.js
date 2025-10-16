@@ -21,6 +21,7 @@ import { cashierApi } from '../api/saleApi/cashierApi'
 import { LoginApi } from '../api/loginApi/LoginApi'
 import authSlice from '../service/authSlice'
 import { damageApi } from '../api/damageApi/damageApi'
+import { productReturnApi } from '../api/productReturnApi/productReturnApi'
 
 export const store = configureStore({
   reducer: {
@@ -43,6 +44,7 @@ export const store = configureStore({
     [paymentCategoryApi.reducerPath]: paymentCategoryApi.reducer,
     [paymentApi.reducerPath]: paymentApi.reducer,
     [damageApi.reducerPath]: damageApi.reducer,
+    [productReturnApi.reducerPath]: productReturnApi.reducer,
     auth:authSlice,
     cart: cartSlice,
     payment : paymentSlice,
@@ -68,6 +70,7 @@ export const store = configureStore({
       paymentCategoryApi.middleware,
       paymentApi.middleware,
       damageApi.middleware,
+      productReturnApi.middleware,
     ),
 
   })

@@ -1,8 +1,8 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import Cookies from "js-cookie";
 
-export const damageApi = createApi({
-  reducerPath: "damageApi",
+export const productReturnApi = createApi({
+  reducerPath: "productReturnApi",
   baseQuery: fetchBaseQuery({
     baseUrl: import.meta.env.VITE_API_ENDPOINT,
     prepareHeaders: (headers) => {
@@ -15,22 +15,22 @@ export const damageApi = createApi({
       return headers;
     },
   }),
-  tagTypes: ["damageApi"],
+  tagTypes: ["productReturnApi"],
   endpoints: (builder) => ({
-    getDamage: builder.query({
+    getProductReturn: builder.query({
       query: () => ({
-        url: `damage/return/list`,
+        url: `product/return/list`,
         method: "GET",
       }),
-      providesTags: ["damageApi"],
+      providesTags: ["productReturnApi"],
     }),
-    createDamage: builder.mutation({
+    createProductReturn: builder.mutation({
       query: (formData) => ({
-        url: "damage/return/create",
+        url: "product/return/create",
         method: "POST",
         body: formData,
       }),
-      invalidatesTags: ["damageApi"],
+      invalidatesTags: ["productReturnApi"],
     }),
     // logout: builder.mutation({
     //   query: (token) => ({
@@ -38,9 +38,9 @@ export const damageApi = createApi({
     //     method: "POST",
     //     headers: {dammageApiorization : `Bearer ${token}`}
     //   }),
-    //   invalidatesTags: ["damageApi"],
+    //   invalidatesTags: ["productReturnApi"],
     // }),
   }),
 });
 
-export const { useGetDamageQuery, useCreateDamageMutation } = damageApi;
+export const { useGetProductReturnQuery, useCreateProductReturnMutation } = productReturnApi;

@@ -20,8 +20,8 @@ import {
 import html2canvas from "html2canvas-pro";
 import jsPDF from "jspdf";
 import { useNavigate } from "react-router-dom";
-import DamageLeft from "./Damage-left";
-import { useCreateDamageMutation } from "@/feature/api/damageApi/damageApi";
+import DamageLeft from "./Product-return-left";
+import { useCreateProductReturnMutation } from "@/feature/api/productReturnApi/productReturnApi";
 
 // Helper function to normalize KPY values (handle carry-over)
 const normalizeKPY = (kyat, pae, yway) => {
@@ -146,9 +146,9 @@ function toFixedDown(num, digits) {
   return (Math.floor(num * factor) / factor).toFixed(digits);
 }
 
-const Damage = () => {
+const ProductReturn = () => {
   const printRef = useRef(null);
-  const [createDamage, { isLoading }] = useCreateDamageMutation();
+  const [createProductReturn, { isLoading }] = useCreateProductReturnMutation();
   const dispatch = useDispatch();
   const nav = useNavigate();
 
@@ -700,13 +700,13 @@ const Damage = () => {
     };
 
     try {
-      const result = await createDamage(payload).unwrap();
-      alert("✅ Damage created successfully!");
-      nav("/damage/damage-list");
+      const result = await createProductReturn(payload).unwrap();
+      alert("✅ Product created successfully!");
+      nav("/return/product-list");
       dispatch(clearCart());
     } catch (error) {
-      console.error("Damage creation failed:", error);
-      alert("❌ Damage failed: " + (error.message || "Unknown error"));
+      console.error("Product creation failed:", error);
+      alert("❌ Product failed: " + (error.message || "Unknown error"));
     }
   };
 
@@ -1738,4 +1738,4 @@ const Damage = () => {
   );
 };
 
-export default Damage;
+export default ProductReturn;
